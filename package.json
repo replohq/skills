@@ -1,0 +1,12 @@
+{
+  "name": "@replohq/skills",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Skills that teach any AI coding agent how to build on Replo.",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/replohq/skills.git"
+  },
+  "homepage": "https://replo.app"
+}
