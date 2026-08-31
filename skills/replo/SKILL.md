@@ -1,7 +1,7 @@
 ---
 name: replo
 description: Use whenever a request touches Replo through the Replo connector: ecommerce sites and pages, brand kits (Brand Studio), Insights analytics and reports, Replo-managed products and orders, media assets, integrations, custom domains, scheduled tasks, skills, or plans. Explains how a Replo project is structured, which connector tools read or write each part, and what can only be done by describing it to a Replo session. Triggers include "build me a landing page", "set up my brand", "how is my site performing", "publish my site", "connect my domain", "schedule a weekly report", "make me a store".
-license: MIT
+license: SEE LICENSE IN LICENSE
 compatibility: Requires the Replo connector and a Replo account.
 ---
 

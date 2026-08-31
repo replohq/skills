@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "replo": {
+      "type": "http",
+      "url": "https://api.replo.app/v1/mcp"
+    }
+  }
+}

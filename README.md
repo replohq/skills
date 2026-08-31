@@ -4,11 +4,20 @@ Skills that teach any AI coding agent how to build on [Replo](https://replo.app)
 
 ## Install
 
+In Claude Code or Cursor, install the plugin — it brings the skills and wires up the Replo MCP server together. Both listings are pending review; until they are approved, use the direct install below.
+
+```bash
+claude plugin install replo@claude-plugins-official   # Claude Code
+/add-plugin replo                                     # Cursor
+```
+
+For any other agent, install the skills directly:
+
 ```bash
 npx skills add replohq/skills
 ```
 
-Installs into whichever agent you use — Claude Code, Cursor, Codex, OpenClaw, opencode, and others. To pick a subset:
+Works with whichever agent you use — Claude Code, Cursor, Codex, OpenClaw, opencode, and others. To pick a subset:
 
 ```bash
 npx skills add replohq/skills --list
@@ -31,4 +40,4 @@ These files are generated from Replo's source tree on every merge, so pull reque
 
 ## License
 
-MIT
+Proprietary — see [LICENSE](LICENSE).
