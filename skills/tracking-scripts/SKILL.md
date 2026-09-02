@@ -52,9 +52,10 @@ below).
 
 For Converge the `identifier` is the public token from the merchant's Client
 Source (Converge → Data management → Event sources), which loads
-`https://static.runconverge.com/pixels/{token}.js`. Pageviews and e-commerce
-funnel events are fired by the Replo runtime's analytics sinks (including on
-SPA soft navigations), so no extra tracking code is needed.
+`https://static.runconverge.com/pixels/{token}.js`. The snippet self-fires the
+initial pageview; e-commerce funnel events and pageviews on SPA soft
+navigations are fired by the Replo runtime's analytics sinks, so no extra
+tracking code is needed.
 
 For Contentsquare the `identifier` is the 13-character UXA tag ID (e.g.
 `21d351bec970b`), which loads `https://t.contentsquare.net/uxa/{id}.js`.
