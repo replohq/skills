@@ -26,7 +26,8 @@ import { useProductViewedAnalytics } from "@replohq/sdk/analytics/hooks/use-prod
 function ProductPage({ product, selectedVariant }) {
   useProductViewedAnalytics({ product, selectedVariant });
   // product: { id: string; title: string; slug?: string; description?: string }
-  // selectedVariant: { id: string; title?: string; sku?: string; price?: number }
+  // Pass the ProductLoader variant through unchanged. Its price must include
+  // { amount: string | number; currencyCode: string } for provider event contracts.
 }
 ```
 
