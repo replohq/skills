@@ -73,6 +73,20 @@ Omit `requiredConsent` for identifier providers — each has a sensible default
 consent category. Only set `requiredConsent` if the user explicitly wants to
 recategorize it.
 
+**Check for a tag manager first.** Before adding `Meta`, `GA4`, `TikTok`,
+`Pinterest`, `Snapchat`, or `Reddit`, look in the `scripts` array for a
+`GoogleTagManager` entry, a `Segment` entry, or a `snippet` entry with
+`id: "Elevar"`. Those tools commonly fire these pixels themselves (a GTM
+container loads whatever tags it holds; Elevar and Segment forward events to
+their configured destinations), so adding the pixel directly as well sends every
+event twice and shows up as inflated or "broken" numbers in the ad platform. If
+one is present, ask the user whether their container or tool already fires that
+pixel, and only add it after they confirm it does not. Whether you add it or
+not, say plainly in your reply that the pixel may be double-firing and that
+they should keep only one of the two. The Scripts & Pixels miniapp reads the
+public GTM container and shows the same warning, so a merchant who installs
+from there sees it too.
+
 ## Adding a custom script
 
 For anything not in the known-provider list, add a `custom` entry. Custom entries
@@ -300,6 +314,13 @@ already gates them at injection. Full surface is documented in
 - Don't forget to bump the banner's `useConsent({ version })` policy version
   when you change the banner copy or category set (see
   "Customizing the consent banner").
+- Don't add a Meta, GA4, TikTok, Pinterest, Snapchat, or Reddit pixel next to a
+  `GoogleTagManager`, `Segment`, or Elevar entry without asking whether that
+  tool already fires it, and without telling the user it may double-fire (see
+  "Check for a tag manager first").
+- Don't invent provider `type` values; use the exact PascalCase keys above.
+- Don't set `requiredConsent` on known providers unless explicitly asked.
+- Don't put both `src` and `body` on a custom entry.
 - Don't invent provider `type` values; use the exact PascalCase keys above.
 - Don't set `requiredConsent` on known providers unless explicitly asked.
 - Don't put both `src` and `body` on a custom entry.
@@ -308,7 +329,7 @@ already gates them at injection. Full surface is documented in
 
 | User intent | Action |
 | --- | --- |
-| Add GA4 / Meta / TikTok / etc. | Add `{ type, identifier }` to the `scripts` array |
+| Add GA4 / Meta / TikTok / etc. | Check for a `GoogleTagManager`, `Segment`, or Elevar entry first and warn about double-firing; then add `{ type, identifier }` to the `scripts` array |
 | Add Converge | Add `{ type: "Converge", identifier: "<public token>" }` (see "Adding a known provider") |
 | Add an arbitrary tracking script | Add `{ type: "custom", id, src \| body, requiredConsent }` |
 | Add Triple Whale | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Triplewhale", body, requiredConsent }`; tell the user to register the site's domains as headless domains in Triple Whale (see "Snippet providers") |
