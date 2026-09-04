@@ -147,6 +147,19 @@ a `<script type="module">` snippet, so the entry must set `module: true`:
 { type: "snippet", id: "Elevar", body: "<pasted snippet JS>", module: true, requiredConsent: ["analytics", "marketing"] }
 ```
 
+Elevar's snippet only forwards what the page pushes to `window.ElevarDataLayer`,
+and the Replo runtime pushes Elevar's standard data layer events automatically
+once this entry is installed (the `id` must be exactly `"Elevar"` for the runtime
+to recognize it): `dl_user_data` on every page and client-side route change,
+plus `dl_view_item`, `dl_add_to_cart`, `dl_remove_from_cart`, `dl_view_cart`,
+`dl_begin_checkout`, and the collection view event from the site's cart and
+product flows. Do **not** hand-write `window.ElevarDataLayer.push(...)` calls or add a
+separate data layer script — that would double-fire every event. If the site
+already contains hand-written `ElevarDataLayer.push` calls from before the
+runtime did this (search the site code for `ElevarDataLayer`), remove them in
+the same change and tell the user why. `dl_purchase` is reported by the
+merchant's Elevar Shopify source at checkout, not by the storefront.
+
 Module snippets work under a consent platform too: the runtime injects a
 blocked classic shim that re-creates the module tag when the platform
 activates it, so `module: true` needs no special handling alongside Cookiebot.
@@ -333,7 +346,7 @@ already gates them at injection. Full surface is documented in
 | Add Converge | Add `{ type: "Converge", identifier: "<public token>" }` (see "Adding a known provider") |
 | Add an arbitrary tracking script | Add `{ type: "custom", id, src \| body, requiredConsent }` |
 | Add Triple Whale | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Triplewhale", body, requiredConsent }`; tell the user to register the site's domains as headless domains in Triple Whale (see "Snippet providers") |
-| Add Elevar | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Elevar", body, module: true, requiredConsent }` (see "Snippet providers") |
+| Add Elevar | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Elevar", body, module: true, requiredConsent }`; the runtime pushes the `dl_*` data layer events itself (see "Snippet providers") |
 | Add Cookiebot | Check for an existing loader first; add `{ type: "Cookiebot", identifier: "<CBID GUID>" }` and set consent mode to `off` (see "Cookiebot") |
 | Add another consent platform | Add a `consentPlatform` entry built from its manual-blocking docs (see "Other consent platforms") |
 | Remove a tracker | Delete its entry from the `scripts` array |
