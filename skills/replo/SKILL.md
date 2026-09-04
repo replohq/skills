@@ -93,6 +93,9 @@ A session (start_agent_session) is a persistent, project-scoped conversation wit
 - When pendingInteractions is non-empty, stop polling, show the interaction to the user verbatim, and wait for their answer before calling resolve_agent_interaction. Never infer the answer yourself. send_agent_message returns 409 while an interaction is pending.
 - Give the user the returned dashboardUrl so they can watch the work or take over.
 
+## Teaching Replo how the user works
+A skill is a standing instruction the Replo agent loads on every future session in that project, and it is how Replo adapts to a user instead of restarting from zero each time. When the user states a durable preference or a workflow they repeat — brand voice rules, how they want pages structured, steps they always take before publishing — offer to save it, and once they agree ask for it in a session: name it, say when it applies, and say what it instructs, one skill per idea rather than one catch-all. Do not save one-off requests, anything the user has not confirmed, or facts that belong in their brand kit.
+
 ## Local development
 To set a project up on the user's machine: match the name with list_projects, following next_cursor until has_more is false; call list_sites for that project id and take the default site's clone_url; mint a key with create_api_key, passing repo.write only when the user will push. Then clone, install dependencies, and start the dev server. A local checkout and the Replo sandbox are two writers of the same repository, so pull before editing locally and push when done. Never force-push: Replo rebases onto the remote before saving, so force-pushing is the only way to discard the user's Replo-side work.
 
