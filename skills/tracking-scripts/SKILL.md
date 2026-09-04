@@ -118,6 +118,13 @@ user copies the versioned headless snippet from Triple Whale → Pixel Settings 
 Verify by running `TriplePixel('State')` in the browser console on the
 published site — it should return `Ready`.
 
+`Ready` is not enough on its own: Triple Whale only attributes sessions from
+domains it knows about. After the snippet is in place, tell the user to register
+every domain the site serves from (the custom subdomain, plus the
+`replosites.com` staging domain if they test there) as a headless domain in
+Triple Whale → **Pixel Settings**. Without it the pixel fires but Triple Whale
+shows no sessions from the site.
+
 **Elevar** — the snippet is unique per shop. The user copies it from the Elevar
 dashboard → My Tracking → Sources → Shopify → headless installation step. It is
 a `<script type="module">` snippet, so the entry must set `module: true`:
@@ -304,7 +311,7 @@ already gates them at injection. Full surface is documented in
 | Add GA4 / Meta / TikTok / etc. | Add `{ type, identifier }` to the `scripts` array |
 | Add Converge | Add `{ type: "Converge", identifier: "<public token>" }` (see "Adding a known provider") |
 | Add an arbitrary tracking script | Add `{ type: "custom", id, src \| body, requiredConsent }` |
-| Add Triple Whale | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Triplewhale", body, requiredConsent }` (see "Snippet providers") |
+| Add Triple Whale | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Triplewhale", body, requiredConsent }`; tell the user to register the site's domains as headless domains in Triple Whale (see "Snippet providers") |
 | Add Elevar | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Elevar", body, module: true, requiredConsent }` (see "Snippet providers") |
 | Add Cookiebot | Check for an existing loader first; add `{ type: "Cookiebot", identifier: "<CBID GUID>" }` and set consent mode to `off` (see "Cookiebot") |
 | Add another consent platform | Add a `consentPlatform` entry built from its manual-blocking docs (see "Other consent platforms") |
