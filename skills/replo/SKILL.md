@@ -41,7 +41,9 @@ Orders placed through Replo checkout. Amounts are integers in the currency's min
 ### Assets versus Files
 Assets is the project's media library — images, video, fonts, documents that pages and emails reference. Files is a separate private drive of documents the user and the agent work from (briefs, spreadsheets, drafts), with folders and sharing. upload_asset and find_assets touch Assets only.
 - Tools: find_assets, upload_asset.
-- Prompt-only: generating or editing images, organizing the library, anything in Files.
+- Files tools: list_files, get_file, read_file, create_file, update_file. Supply projectId when listing or creating; fileId identifies existing entries. Use create_file for research, briefs, and other working documents, with a text, base64, or asset source. Creating a folder uses kind "folder". An asset source copies into Files and preserves the source asset.
+- Recovery: if a document is missing from Files, also check find_assets before reporting it missing. An upload_asset result only proves it exists in Assets.
+- Prompt-only: generating or editing images, organizing the asset library.
 
 ### Insights
 Traffic, engagement, and sales dashboards for the project's sites, built from Replo's own event data. Includes report templates and custom reports the agent can build from a description.
