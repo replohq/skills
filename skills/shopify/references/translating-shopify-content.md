@@ -2,11 +2,13 @@
 
 Page dictionaries (`dictionaries/<locale>.json`) translate Replo site copy only. Shopify product titles, descriptions, options, and metafield values come from the Storefront API and stay in the shop's primary language unless you pass `language` into the product, collection, and collection-products loaders.
 
+**Language is not market/currency.** Passing `language` translates catalog text. It does not change currency, prices, or which market's catalog Shopify returns. For currency and market pricing, read [shopify-markets.md](shopify-markets.md) and pass `country` separately.
+
 ## When to use this
 
 - The site already has (or is adding) locale routing via `reploLocaleRouting` — see the localization reference in the **building-replo-pages** skill.
 - A page renders Shopify catalog data through `ProductLoader`, `CollectionLoader`, or `CollectionProductsLoader`.
-- The merchant has translations in Shopify (Translate & Adapt / Markets). Those values are not separate metafields in admin; Storefront returns them for the same `namespace`/`key` when the request is contextualized.
+- The merchant has translations in Shopify (Translate & Adapt). Those values are not separate metafields in admin; Storefront returns them for the same `namespace`/`key` when the request is contextualized with a language.
 
 ## Pass `language` to the loaders
 
@@ -91,6 +93,7 @@ export default async function Page({
 
 ## Behavior notes
 
-- Country and language are independent. This prop only sets `@inContext(language:)` — it does not change market pricing or country context.
-- If the requested language is a valid `LanguageCode` but not enabled for the shop/market, Shopify silently serves a supported language (often the primary). That is expected; do not special-case it.
+- This prop only sets `@inContext(language:)` — translated titles, descriptions, options, and metafields. It does not change market pricing or currency.
+- `language` is optional. Omit it for the shop's primary language; pass it alone when you only need translated catalog text.
+- If the requested language is a valid `LanguageCode` but not enabled for the shop, Shopify silently serves a supported language (often the primary). That is expected; do not special-case it.
 - Invalid `LanguageCode` values (not in Shopify's enum) are real GraphQL errors — fix the mapping rather than swallowing them.

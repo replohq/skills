@@ -28,6 +28,10 @@ For Replo-managed products (a separate catalog from Shopify), use the
 
 When the site uses locale routing / dictionaries **and** Shopify product or collection loaders, read [translating-shopify-content.md](references/translating-shopify-content.md). Dictionary files do not translate Shopify titles, descriptions, or metafields — pass `language` on the loaders.
 
+## Shopify Markets (currency / country)
+
+Language and Markets are different concepts. `language` translates catalog text; `country` selects market currency and international pricing. When the user asks about currency, Markets, regional prices, or market-specific catalog, read [shopify-markets.md](references/shopify-markets.md) and pass `country` on the product/collection loaders. Do not fold Markets work into the translation reference.
+
 ## File Structure
 
 Data loaders live in the `@replohq/sdk` package under `loaders/`:
