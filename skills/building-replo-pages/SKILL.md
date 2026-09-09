@@ -177,6 +177,20 @@ grep -rEn --include='*.tsx' -e '<img\b' $SRC
 
 # 6) Primary-fill buttons (Button defaults to the primary variant when none is passed)
 grep -rEn --include='*.tsx' -e '<Button\b' $SRC | grep -vE 'variant=[{"]*"?(outline|secondary|ghost)'
+
+# 7) Pointer cursor on buttons (Tailwind v4 dropped it from preflight; globals.css must restore it)
+grep -L 'button:not(:disabled)' app/globals.css
+```
+
+Check 7 prints the stylesheet path when the site has no base rule giving buttons a pointer cursor — a button with the arrow cursor reads as dead, and Tailwind v4's preflight no longer sets it. Add the rule to `globals.css` (a site forked before the rule existed will be missing it) and never restate `cursor-pointer` per element as the fix:
+
+```css
+@layer base {
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+}
 ```
 
 Every line check 6 prints must be an instance of that page's one primary action — repeats of the same CTA down a long page are expected. Anything else (nav, cards, quantity steppers, secondary links) is a reserved-color defect; give it `variant="outline"`, `"secondary"`, or `"ghost"`. A `<Button` whose `variant` sits on a later line or behind a helper call prints too — read the tag before treating it as a hit.
