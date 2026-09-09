@@ -48,7 +48,17 @@ Before calling `publish_site`, call `list_sites` to get site IDs.
   asking the user when nothing resolves. Never guess — publishing the wrong
   site overwrites its live deployment.
 
-Pass the `siteId` to the `publish_site` tool. That is the whole input — the tool finds the site's folder on disk itself, so never go looking for it.
+Pass the `siteId` to the `publish_site` tool, plus `promoteRoutes` only when the user asked to publish a subset of pages (see below). The tool finds the site's folder on disk itself, so never go looking for it.
+
+## Publish Only Some Pages
+
+`publish_site` takes an optional `promoteRoutes` list. Each entry is a site route: a page (`/`, `/about`) or a content entry (`/<collection>/<slug>`, e.g. `/blog/my-post`). Routes must start with `/`.
+
+- Omit `promoteRoutes` to publish every page and content entry with unpublished changes. This is the default, and what "publish the site" means.
+- Pass the routes the user named to put only those drafts live. Every other page and entry keeps its unpublished changes as a draft. Site-wide changes (layout, shared components, config) always go live.
+- Pass `[]` to publish only site-wide changes and leave every page and entry draft as it is.
+
+Only use `promoteRoutes` when the user asks for a subset ("publish the pricing page", "just the about page and the new blog post"). Take routes from the user's request or the pages edited in this session; never guess. A route the site does not have fails the publish.
 
 ## Commit Before Publish
 
@@ -143,7 +153,7 @@ The `publish_site` tool validates artifacts before uploading. Handle its errors 
 1. Make code changes.
 2. Call `list_sites` to get the target site's `siteId`, unless the prompt already provided one. Resolve the site per "Determine Which Site to Publish" above.
 3. Run `git status --porcelain`. If there are uncommitted changes, commit and push them. If the working tree is already clean, do not create an empty commit.
-4. Call the `publish_site` tool with `siteId` (it runs the build).
+4. Call the `publish_site` tool with `siteId`, adding `promoteRoutes` only for a partial publish (it runs the build).
 5. If the build step fails due to a code-level issue (TypeScript errors, etc.), sweep for every occurrence of the failing pattern, fix them all, verify with `pnpm exec tsc --noEmit`, and retry publish.
 6. If publish fails due to missing/invalid artifacts, rebuild and retry.
 7. If publish fails due to an infrastructure problem (publisher 500s, out-of-memory builds, deploy timeouts), do not try to fix the infrastructure — retry a few times, and give up and report to the user if it keeps failing.
