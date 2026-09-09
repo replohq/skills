@@ -36,8 +36,8 @@ Language and Markets are different concepts. `language` translates catalog text;
 
 Data loaders live in the `@replohq/sdk` package under `loaders/`:
 
-- **Generic infrastructure:** `@replohq/sdk/loaders/invoke-loader.ts`, `@replohq/sdk/loaders/prefetch-loaders.tsx`
-- **Loader components:** `@replohq/sdk/loaders/product-loader.tsx`, `@replohq/sdk/loaders/collection-loader.tsx`, `@replohq/sdk/loaders/collection-products-loader.tsx`
+- **Generic infrastructure:** `@replohq/sdk/loaders/invoke-loader-server`, `@replohq/sdk/loaders/prefetch-loaders`
+- **Loader components:** `@replohq/sdk/loaders/product-loader`, `@replohq/sdk/loaders/collection-loader`, `@replohq/sdk/loaders/collection-products-loader`
 
 Import each loader component directly from its own file (e.g. `@replohq/sdk/loaders/product-loader`).
 Import `PrefetchedLoaders` (server component) directly from `@replohq/sdk/loaders/prefetch-loaders`.

@@ -1,6 +1,6 @@
 # Analytics
 
-Read this when building product/collection pages or adding event tracking. Analytics is wired up via `ReploProvider` in `app/layout.tsx` (`@replohq/sdk/analytics/`) — present in templates that ship the runtime layer; if the layout has no `ReploProvider`, add it first. Where the provider is present, events dispatch through consent-derived sinks, so firing via `useAnalytics()` is **safe** — you never check consent first.
+Read this when building product/collection pages or adding event tracking. Analytics is wired up via `ReploProvider` in `app/layout.tsx` (`@replohq/sdk/providers/replo-provider`) — present in templates that ship the runtime layer; if the layout has no `ReploProvider`, add it first. Where the provider is present, events dispatch through consent-derived sinks, so firing via `useAnalytics()` is **safe** — you never check consent first.
 
 ## Auto-tracked — do NOT fire these manually
 

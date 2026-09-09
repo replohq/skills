@@ -37,7 +37,7 @@ The `ReploScriptEntry` type is imported from `@replohq/sdk/consent/types`. Do
 **not** import it from `schemas/*` — a standalone site only resolves
 `@replohq/sdk/*`.
 
-`<ReploScripts>` (from `@replohq/sdk/consent`) handles gating and injection. You
+`<ReploScripts>` (from `@replohq/sdk/consent/replo-scripts`) handles gating and injection. You
 do **not** write `<script>` tags for managed scripts — you only edit the array.
 
 ## Adding a known provider
