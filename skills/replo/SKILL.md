@@ -30,7 +30,7 @@ Where the brand lives: colors, fonts, logos, imagery, and a business profile (wh
 
 ### Products and checkout
 A project may hold two catalogs at once: Replo-managed products (sold through Replo checkout) and products synced from Shopify or another connected store (sold through that store's checkout). Search both before telling a user a product is missing.
-- Tools: find_products, get_product, create_product, update_product — Replo-managed products only.
+- Tools: find_products, get_product, create_product, update_product, set_product_inventory — Replo-managed products only.
 - Prompt-only: product pages and collection pages, bulk catalog edits, product copy and imagery, working with Shopify-synced products, checkout and cart behavior.
 
 ### Orders
