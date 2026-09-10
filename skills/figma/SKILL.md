@@ -2,7 +2,7 @@
 name: figma
 title: Figma Designs
 summary: Read a Figma file through the Replo connection and rebuild the design as a page with exact fonts, layout, colors, and assets.
-tools: figma_get_file, figma_get_file_nodes, figma_get_images, figma_list_file_components, figma_list_file_styles, upload_asset, find_assets, start_agent_session
+tools: get_integration_status, upload_asset, find_assets, start_agent_session
 description: "REQUIRED when the user wants to build, rebuild, recreate, replicate, or match a Figma design, frame, or page, or to correct the fonts, layout, spacing, or imagery of a page built from one. Triggers: a figma.com link, \"from Figma\", \"this Figma file\", \"match the Figma\". Also covers reading Figma files, nodes, components, and styles through the project's Figma connection."
 ---
 
