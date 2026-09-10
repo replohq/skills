@@ -508,9 +508,9 @@ Cart operations go through the **dependency-resolver** (server-to-server). The s
 
 Import cart hooks from `@replohq/sdk/cart/hooks/`:
 
-- **`useAddToCart`** — adds items to the cart using merchandise IDs from loader output.
+- **`useAddToCart`** — adds items to the cart using merchandise IDs from loader output. Returns `{ addToCart, isAdding }`; `addToCart` never throws and resolves `{ adjustments, error }` — `adjustments` lists what the server changed about a saved add (a quantity clamped to stock, an unavailable line removed), `error` is set when the cart can't be created or saved.
 - **`useBuyNow`** — creates a cart and redirects directly to checkout (skips the cart UI).
-- **`useCart`** — read-only cart UI state: `itemsCount`, `isCartOpen`, `openCart`, `closeCart`, `updateDiscountCodes`.
+- **`useCart`** — read-only cart UI state: `itemsCount`, `isCartOpen`, `openCart`, `closeCart`, `updateDiscountCodes`, plus `error` / `clearError` for the last cart change that failed to save.
 
 ### Add to Cart
 
@@ -541,7 +541,7 @@ function ProductCard({ productId }: { productId: string }) {
               disabled={!firstVariant?.availableForSale || isAdding}
               onClick={() => {
                 if (firstVariant) {
-                  addToCart([{ merchandiseId: firstVariant.id, quantity: 1 }]);
+                  void addToCart([{ merchandiseId: firstVariant.id, quantity: 1 }]);
                 }
               }}
             >
@@ -554,6 +554,8 @@ function ProductCard({ productId }: { productId: string }) {
   );
 }
 ```
+
+**Failures are handled by the SDK, not the button.** When the cart can't be created or saved, `addToCart` resolves with `error` set, the provider stores the same shopper-ready message on `useCart().error`, and the slide-out cart opens (or stays open) so the shopper sees it. The slide-out cart must render `useCart().error` — see Cart UI below. Do not wrap `addToCart` in `try/catch` or render a per-button error; read the result only when the caller needs `adjustments` or wants to branch on `error`.
 
 ### Add to Cart from a Collection Grid
 
@@ -615,6 +617,7 @@ A complete slide-out cart handles:
 - Bundle and subscription badge display
 - Subtotal, discounts, and total calculation
 - Checkout link
+- The last change that failed to save: `useCart().error` carries a shopper-ready `message` (set when an add, quantity change, removal, or discount can't be saved; cleared when the next change starts). Render it near the top of the cart with the line items still visible, and call `clearError()` from a dismiss control.
 
 To open the cart from any component (e.g., an "Add to Cart" button or a cart icon in a header):
 

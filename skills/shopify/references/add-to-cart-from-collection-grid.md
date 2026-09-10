@@ -8,6 +8,7 @@ How to wire `useAddToCart` to product cards rendered from a `CollectionProductsL
 - For a single-variant card, use `firstAvailableVariant.id` (or fall back to `product.variants?.[0]?.id` if nothing is in stock).
 - For a multi-variant card with a variant picker, track the user-selected variant in local state and pass its `id`.
 - No need to pass `merchandise` — the cart hook auto-resolves display data from the `CollectionProductsLoader` cache for optimistic UI.
+- `addToCart` never throws; it resolves `{ adjustments, error }`. When the cart can't be created or saved, `error` is set, the SDK stores the same shopper-ready message on `useCart().error`, and the slide-out cart opens and renders it — no per-card error handling is needed.
 
 ## Example
 
@@ -47,7 +48,7 @@ export function CollectionGridWithCart({
                   }
                   onClick={() => {
                     if (firstAvailableVariant) {
-                      addToCart([
+                      void addToCart([
                         {
                           merchandiseId: firstAvailableVariant.id,
                           quantity: 1,
