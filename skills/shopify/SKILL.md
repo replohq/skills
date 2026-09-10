@@ -10,16 +10,23 @@ description: "REQUIRED before using any Shopify tools or generating pages with p
 ## Reading the store's catalog and custom data
 
 The loaders below render Shopify data on your pages and need no Shopify
-credentials — the site resolves them server-side. **Discovery** reads, though —
-searching products, listing metafield or metaobject definitions, inspecting a
-real metafield value — run against the store's Admin API, which is not on the
-public surface. Two ways to get those answers:
+credentials — the site resolves them server-side. **Discovery** reads — searching
+products, listing metafield or metaobject definitions, inspecting a real
+metafield value — run against the store's Admin API, which you reach through the
+integrations tools:
 
-- **Ask a Replo session.** Prompt `start_agent_session` with what you need, e.g.
-  "List the metafield definitions for products on the connected Shopify store,
-  and show me a real value for each."
-- **Ask the user.** Product GIDs, handles, and metafield namespace/key pairs are
-  all visible in the Shopify admin.
+- Search your tool list for the `shopify_` prefix. Each read operation is its
+  own tool with its own input schema — the product search, collection get, and
+  metafield-definition list operations are the usual starting points. Every one
+  takes a `reploProjectId`.
+- These tools are advertised whether or not the project has connected Shopify,
+  so call the one you need and let the call report the connection state.
+- When a call fails with a connection error, Shopify is not connected yet. Call
+  `get_integration_status` with `integrationKey: "shopify"`, give the user the
+  `connectUrl` it returns, and poll until it reports connected.
+
+Writes to the store are not on the public surface. For those, prompt
+`start_agent_session` with what you need.
 
 For Replo-managed products (a separate catalog from Shopify), use the
 `find_products` and `get_product` tools directly.
