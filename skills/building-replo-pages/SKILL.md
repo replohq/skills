@@ -64,6 +64,11 @@ brief states them.
   **site-metadata-conventions** skill.
 - **Default to creating a new page**, not overwriting one, unless the user
   explicitly says to replace a specific existing page.
+- **A Figma link is a spec, not a brief.** When the user wants a page built,
+  rebuilt, or corrected from a Figma design, follow the **figma** skill: it
+  owns reading the file through the project's Figma connection, exact font
+  matching, asset persistence, and the fidelity gate. The rules here still
+  apply to the repo work.
 - **Show progress early (hard rule).** For a new page, your **first write to the
   route must be the minimal skeleton — never the full page**, even when the page
   is small enough to one-shot. Confirm the route renders, share the local URL,
