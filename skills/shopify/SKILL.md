@@ -603,6 +603,16 @@ function BuyNowButton({ variantId }: { variantId: string }) {
 
 `useBuyNow` creates a Shopify cart and redirects to **Shopify Checkout**. Wallet options (Shop Pay, Apple Pay, Google Pay) can appear **inside** that hosted checkout. `useBuyNow` is **not** an on-page "Buy with Shop Pay" button in itself.
 
+### Checkout provider
+
+Connecting Shopify gives the project Shopify **data**. It does **not** decide what powers checkout; that is the project's `checkoutProvider`, read with `get_project`:
+
+- `shopify` — the cart is a Shopify cart and Checkout sends shoppers to Shopify Checkout. `useBuyNow` and the cart's Checkout link only reach Shopify Checkout in this state.
+- `replo` — Replo checkout. Shopify products cannot be bought this way.
+- `null` — checkout is off.
+
+**Before promising Shopify checkout, or when Checkout fails on a Shopify-connected site, check the provider first.** A project still on `replo` after connecting Shopify is the usual cause: the store is connected but shoppers cannot check out yet. Tell the user plainly, then offer to switch. Once they agree, call `update_project` with `checkoutProvider: "shopify"`, and publish the site again afterwards because publish bakes the provider into the site. Switching changes the Checkout button on every published site of the project, so never switch without the user's explicit yes. The call is refused when Shopify is not connected, or when switching to `replo` before the project's payments onboarding is complete.
+
 ### Shop Pay (on-page Buy with Shop Pay)
 
 When the user asks for Shop Pay / Buy with Shop Pay on the page (Shopify-checkout projects only), see [shop-pay-button.md](references/shop-pay-button.md). Do not hardcode it onto every PDP by default. Do not confuse it with `useBuyNow`.
