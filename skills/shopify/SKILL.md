@@ -557,6 +557,22 @@ function ProductCard({ productId }: { productId: string }) {
 
 **Failures are handled by the SDK, not the button.** When the cart can't be created or saved, `addToCart` resolves with `error` set, the provider stores the same shopper-ready message on `useCart().error`, and the slide-out cart opens (or stays open) so the shopper sees it. The slide-out cart must render `useCart().error` — see Cart UI below. Do not wrap `addToCart` in `try/catch` or render a per-button error; read the result only when the caller needs `adjustments` or wants to branch on `error`.
 
+### Subscriptions (selling plans)
+
+Supported natively when the checkout provider is `shopify` (on `stripe` the plan is dropped at checkout, so switch the provider first). Subscription apps (Skio, Recharge, Loop, …) create Shopify selling plans, which the loaders and cart carry through to Shopify Checkout. Never tell the user subscriptions can't be sold from a Replo page, and never route subscribe traffic to the Shopify PDP.
+
+- `product.sellingPlanGroups[].sellingPlans[]` lists the plans; `variant.sellingPlanIds` lists which of them the variant is eligible for.
+- Pass `sellingPlanId` on the line to `addToCart` / `buyNow`; omit it for one-time purchase. The saved line carries `sellingPlanAllocation` with the adjusted price.
+
+```tsx
+const plans = product.sellingPlanGroups.flatMap((group) =>
+  group.sellingPlans.filter((plan) => variant.sellingPlanIds.includes(plan.id)),
+);
+void addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId: selectedPlanId }]);
+```
+
+Selector UX rules live in the `product-display` skill.
+
 ### Add to Cart from a Collection Grid
 
 When wiring an Add to Cart button inside a `CollectionProductsLoader` grid, see [add-to-cart-from-collection-grid.md](references/add-to-cart-from-collection-grid.md). Key rule: pass the variant GID (`product.variants[N].id`), never `product.id`.
