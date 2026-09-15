@@ -32,7 +32,7 @@ Skills tell an agent how to build; the MCP server lets it act on your account. C
 
 ## What's here
 
-`building-replo-pages` is the one to read first: a Replo site is a Next.js App Router repo, and pages get their catalog data from Shopify data loaders rather than hardcoded values. The rest cover publishing, custom domains, branding, analytics queries, Shopify, and the Klaviyo, Okendo, Rebuy, Smile.io, and Statsig integrations.
+`building-replo-pages` is the one to read first: a Replo site is a Next.js App Router repo, and pages get their catalog data from Shopify data loaders rather than hardcoded values. Read `local-development` before pushing to a site's repository. The rest cover publishing, custom domains, branding, analytics queries, Shopify, and the Klaviyo, Okendo, Rebuy, Smile.io, and Statsig integrations.
 
 ## Contributing
 

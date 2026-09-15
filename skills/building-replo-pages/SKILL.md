@@ -29,15 +29,13 @@ brief states them.
 
 ## Working on a Replo site from your own machine
 
-1. Resolve the site: `list_projects` → `list_sites` (use the default site unless
-   the user names one). Each site returns a `clone_url`.
-2. Mint a key with `create_api_key` (include `repo.write` when you will push)
-   and clone per the [Replo Git docs](/git/get-started).
-3. `pnpm install && pnpm dev` gives a real local dev server — the Definition of
-   Done checks and the visual audit below both run against it.
-4. The Replo agent is a second writer of the same repo — pull before editing,
-   push when done, never force-push.
-5. Publish with `publish_site` only when the user explicitly asks.
+1. **REQUIRED:** Use the **local-development** skill to resolve the site, mint a
+   key, clone, and push. Pushing to `main` does not publish, but the next
+   publish ships it, so push only when the user asks.
+2. Run the site's install and dev commands (most sites use `pnpm install` and
+   `pnpm dev`) — the Definition of Done checks and the visual audit below both
+   run against that dev server.
+3. Publish with `publish_site` only when the user explicitly asks.
 
 ## Critical defaults (read fully)
 
