@@ -31,25 +31,20 @@ function ProductPage({ product, selectedVariant }) {
 }
 ```
 
-**Collection viewed** — via `useAnalytics()`:
+**Collection viewed** — dedicated hook on collection pages:
 
 ```tsx
 "use client";
 
-import { useAnalytics } from "@replohq/sdk/analytics/analytics-provider";
+import { useCollectionViewedAnalytics } from "@replohq/sdk/analytics/hooks/use-collection-viewed-analytics";
 
-function CollectionPage({ collection }) {
-  const analytics = useAnalytics();
-  useEffect(() => {
-    if (analytics) {
-      void analytics.viewCollection({
-        data: {
-          collectionId: collection.id,
-          collectionTitle: collection.title,
-        },
-      });
-    }
-  }, [analytics, collection.id, collection.title]);
+function CollectionPage({ collection, products }) {
+  useCollectionViewedAnalytics({ collection, products });
+  // collection: { id: string; title?: string; handle?: string }
+  // products: the collection-products loader's `products` array, unchanged.
+  // Pass `undefined` while it is still loading — the event fires once per
+  // collection and carries the product list to GA4, TikTok, Pinterest,
+  // Reddit, Converge, and Elevar.
 }
 ```
 
