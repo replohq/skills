@@ -37,7 +37,7 @@ When the site uses locale routing / dictionaries **and** Shopify product or coll
 
 ## Shopify Markets (currency / country)
 
-Language and Markets are different concepts. `language` translates catalog text; `country` selects market currency and international pricing. When the user asks about currency, Markets, regional prices, or market-specific catalog, read [shopify-markets.md](references/shopify-markets.md) and pass `country` on the product/collection loaders. Do not fold Markets work into the translation reference.
+Language and Markets are different concepts. `language` translates catalog text; loader `country` selects market currency and international pricing. When the user asks about currency, Markets, regional prices, cart currency, or market-specific catalog, read [shopify-markets.md](references/shopify-markets.md). Pass `country` on the product/collection loaders **and** the same code on `ReploProvider` as `markets={{ shopify: { country } }}` — loaders alone leave cart and checkout in the shop default. Do not fold Markets work into the translation reference.
 
 ## File Structure
 
@@ -503,6 +503,7 @@ Cart operations go through the **dependency-resolver** (server-to-server). The s
 - No Shopify credentials are needed in the scaffold for cart.
 - Cart hooks call server actions, which call the resolver, which calls Shopify.
 - Cart state is persisted via a cookie (`replo_cart_id`) containing only the Shopify cart GID.
+- Markets currency is not automatic. Pass the same country you use on product loaders to `ReploProvider` as `markets={{ shopify: { country } }}` so cart create and checkout use that market. See [shopify-markets.md](references/shopify-markets.md).
 
 ### Hooks
 
