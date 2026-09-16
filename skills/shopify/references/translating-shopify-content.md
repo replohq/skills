@@ -2,7 +2,7 @@
 
 Page dictionaries (`dictionaries/<locale>.json`) translate Replo site copy only. Shopify product titles, descriptions, options, and metafield values come from the Storefront API and stay in the shop's primary language unless you pass `language` into the product, collection, and collection-products loaders.
 
-**Language is not market/currency.** Passing `language` translates catalog text. It does not change currency, prices, or which market's catalog Shopify returns. For currency and market pricing, read [shopify-markets.md](shopify-markets.md) and pass `country` on the loaders **and** `markets={{ shopify: { country } }}` on `ReploProvider`.
+**Language is not market/currency.** Passing `language` translates catalog text. It does not change currency, prices, or which market's catalog Shopify returns. For currency and market pricing, read [shopify-markets.md](shopify-markets.md) and pass `country` separately.
 
 ## When to use this
 
