@@ -574,6 +574,31 @@ void addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId: selecte
 
 Selector UX rules live in the `product-display` skill.
 
+### Bundle apps (Kaching Bundles)
+
+When the user mentions Kaching, bundle deals, volume discounts, or quantity breaks, call `shopify_apps_detect` first. If it reports Kaching Bundles as detected, render the deal with `KachingBundlesLoader` (loaderKey `shopify_storefront.kaching_bundles`) instead of hand-building quantity cards: it mounts Kaching's own widget, styled from the Kaching app, and renders your `children` under it with the shopper's current pick as cart lines that already carry the Kaching line attributes. Pass those lines to `addToCart`; Kaching applies the discount at Shopify Checkout, and the cart shows it as a discount allocation. Requires the `shopify` checkout provider.
+
+```tsx
+import { KachingBundlesLoader } from "@replohq/sdk/loaders/kaching-bundles-loader";
+
+<KachingBundlesLoader
+  loaderKey={DATA_LOADER_KEYS.SHOPIFY_KACHING_BUNDLES}
+  productId={product.id}
+  selectedVariantId={selectedVariant.id}
+  noDealFallback={<QuantitySelector />}
+>
+  {({ lines }) => (
+    <button disabled={lines.length === 0} onClick={() => void addToCart(lines)}>
+      Add to cart
+    </button>
+  )}
+</KachingBundlesLoader>
+```
+
+The lines belong to the loader instance for that product, so put the button inside `children`, not in your own state. For Buy Now, map each line to `{ variantId: line.merchandiseId, quantity, sellingPlanId, properties }`; `buyNow` keeps `properties`, and dropping them loses the discount. `noDealFallback` holds your normal buy box for products Kaching has no deal for. Kaching's fetch reports a Storefront failure as "no deal", so a transient error shows the fallback for up to a minute rather than an error.
+
+Never add Kaching's theme snippet or `<kaching-bundle>` element as a page script, and do not re-implement the discount in page code. If Kaching is not installed, build the buy box normally.
+
 ### Add to Cart from a Collection Grid
 
 When wiring an Add to Cart button inside a `CollectionProductsLoader` grid, see [add-to-cart-from-collection-grid.md](references/add-to-cart-from-collection-grid.md). Key rule: pass the variant GID (`product.variants[N].id`), never `product.id`.
