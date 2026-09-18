@@ -62,6 +62,7 @@ export const config = {
 
 Semantics that are always on — do not reimplement or work around them:
 
+- Prefix matching is case-insensitive: `/en-eu/about` identifies `en-EU` and 308s to the canonical spelling. Shopify Markets URLs are lowercase. Never re-detect prefixes with a case-sensitive regex (`/^\/en-EU/`); if custom middleware must inspect the prefix, use `getLocaleFromPath` from `@replohq/sdk/routing/locale`.
 - An explicit choice in the `replo-locale` cookie beats every detection signal. Landing on a locale-prefixed URL sets it.
 - Matching is best-fit: a `fr-CA` visitor gets `fr-FR` when that is the only French. A region mismatch never 404s.
 - The `replo-country-override` cookie (a 2-letter country code) overrides IP-country detection — use it to test `"country"` mode without a VPN, in dev or production.
