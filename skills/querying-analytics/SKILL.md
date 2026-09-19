@@ -13,6 +13,25 @@ tools: query_replo_analytics
 
 The `query_replo_analytics` tool lets you run read-only ClickHouse SQL queries against this project's Replo analytics data. Pass a `query` string containing a `SELECT` statement (or a `WITH` CTE that resolves to a `SELECT`).
 
+## Resolve metric meaning before choosing SQL
+
+A familiar metric name is not a complete definition. Use the request, prior conversation, existing report definitions and available data to determine what the number should represent. Before choosing columns, check the choices that could materially change the result:
+
+- **What is counted:** events, sessions, distinct people, orders or another entity; which event or condition qualifies; which identity supports deduplication.
+- **Who is included:** the population, domains/pages, exclusions, and whether filters select matching events or sessions/entities that touched the selection.
+- **How it is calculated:** numerator and denominator for rates/averages, grouping and time buckets, whether groups overlap, and whether a total can be summed or must be recomputed.
+- **When and from where:** reporting/comparison dates, timezone, event date versus cohort date, source and freshness, and units or currency where relevant.
+
+Treat these as reasoning checks, not a questionnaire. If two plausible interpretations would materially change the answer and context does not resolve them, ask a concise question in business language and explain the difference. Ask 1–3 short questions at a time, each resolving one main choice; do not hide a long questionnaire in compound questions. Prioritize choices that change the business conclusion. Reuse established reporting defaults for incidental settings and state them instead of asking about every possible option. Continue independent data discovery while waiting, but do not silently choose an unresolved definition. If the request is clear, use it; if the user delegates choices, state a suitable default and proceed. Never promise a definition the available tracking cannot support.
+
+Examples of ambiguity include "traffic" (pageviews, sessions or identifiable visitors), "conversion rate" (sessions with at least one purchase / sessions versus purchase events / sessions), and "average engagement" (which event or duration, averaged over which population). Revenue attribution is another instance of the same problem; follow the reference below for its specific rules. Do not introduce ambiguity the user has already resolved: "daily distinct sessions for the last 30 UTC days on this domain" needs no metric-definition question.
+
+Confirm source field paths, types and units against the schema or representative events before relying on them. Keep the chosen definition consistent across SQL, labels, filters and totals. Name the counted entity or ratio clearly; disclose material scope, window, overlap and data limitations alongside the result. Validate using the same population and definition: deduplicate distinct counts across overlapping groups, recompute overall rates from the underlying population rather than averaging row percentages or summing overlapping groups, and distinguish missing data from a measured zero.
+
+## Revenue, purchases, and conversion metrics
+
+**Required:** Read [references/revenue.md](references/revenue.md) before writing a query with revenue, purchases, conversion rate, AOV or ROAS. It defines the metrics and the shared `session_attribution(since, until)` calculation. Stored `subjectPurchase*` fields and page/conversion rollups are **project-local**, even though queries can read linked projects. Domain filtering purchase rows measures checkout location, not landing-page contribution.
+
 ## Project Scoping (Important)
 
 Queries are **automatically scoped to the current project and any sibling projects in the same workspace that share its Shopify store** by the server. Every query is executed with a per-project ClickHouse role, and the namespaced tables (`events_computed`, `namespace_to_domain`, `daily_page_rollups`, `daily_namespace_rollups`, `daily_namespace_purchase_rollups`) all have RESTRICTIVE row policies that filter rows to those namespaces before they reach you. **You do not need to add `WHERE namespace = ...` filters to your queries.**
@@ -21,10 +40,11 @@ Because Shopify's web pixel stamps every conversion event with the single projec
 
 ## Tables
 
-The agent has SELECT access to exactly seven tables (plus optional external-integration metric view functions — see below). Anything else will fail with a permission error:
+The agent has SELECT access to the following tables and `session_attribution` view (plus optional external-integration metric view functions — see below). Anything else will fail with a permission error:
 
 | Table                              | Description                                                                                                                                                                                              | Row-policied?                |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `session_attribution(since, until)` | Shared report-window session and page revenue across authorized sibling projects; see the required revenue reference | Inherits source row policies |
 | `events_computed`                  | Session-level computed analytics (PRIMARY TABLE FOR AD-HOC QUERIES)                                                                                                                                      | Yes — scoped to your project |
 | `namespace_to_domain`              | Maps namespace → domain. Useful for resolving domain names.                                                                                                                                              | Yes — scoped to your project |
 | `currency_exchange_rates`          | Currency exchange rates for multi-currency support.                                                                                                                                                      | No (global)                  |
@@ -36,6 +56,8 @@ The agent has SELECT access to exactly seven tables (plus optional external-inte
 ### When to use rollups vs `events_computed`
 
 The three `daily_*_rollups` tables are **`AggregatingMergeTree`** tables refreshed every 5 minutes by background materialized views, with a **3-hour data lag** (the most recent 3 hours of data is not yet in the rollups). They are dramatically faster than `events_computed` for any query that fits their grain (daily, by namespace + optional domain/path/utm_source) and is looking for the data that they roll-up over.
+
+**Prefer rollups for traffic or explicitly project-local metrics. For revenue/conversion analysis spanning linked projects, use `session_attribution` instead.**
 
 **Prefer rollups when:**
 
@@ -65,11 +87,11 @@ Aggregate-state columns (must be read with the matching `*Merge` function — se
 | `session_conversions_state`    | `sumMerge`   | Total conversions from sessions that viewed this page (overcounts when summed across pages — measures influence)    |
 | `session_revenue_usd_state`    | `sumMerge`   | Total revenue from sessions that viewed this page in USD (overcounts when summed across pages — measures influence) |
 
-**Use `fractional_revenue_usd_state` for "total revenue split across the funnel"** — it sums to the real total. Use `session_revenue_usd_state` for "what's the influence of this page" — it overcounts because a multi-page session contributes its full revenue to every page it touched.
+**These rollup revenue/conversion fields are project-local.** They do not join a landing session to a purchase in a sibling namespace. For cross-project reporting use `session_attribution`; see the revenue reference for additive page credit versus overlapping session totals.
 
 ### `daily_namespace_rollups` — Per-day traffic aggregates
 
-`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Traffic-only (no revenue / conversions); join with `daily_namespace_purchase_rollups` for purchase metrics.
+`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Traffic and project-local converting sessions (no purchase count/revenue); join with `daily_namespace_purchase_rollups` for purchase metrics.
 
 | Column                      | Combinator   | Meaning                                  |
 | --------------------------- | ------------ | ---------------------------------------- |
@@ -118,7 +140,7 @@ The `-If` variant of the underlying aggregate (e.g. `uniqStateIf`) is also store
 
 ### `events_computed` — Session-level computed analytics
 
-This is a `ReplacingMergeTree` table keyed on `(namespace, subject, date, id)` with `computedVersion` as the version column. The flusher computes session-level aggregates (purchases, attribution) and writes them into the `computed` JSON column.
+This is a `ReplacingMergeTree` table keyed on `(namespace, subject, date, id)` with `insertDate` as the replacement version column. The flusher computes session-level aggregates (purchases, attribution) and writes them into the `computed` JSON column.
 
 **Querying `events_computed`: avoid bare `FINAL`, and never wrap `date` in `toDate(...)`.**
 
@@ -162,7 +184,7 @@ FROM (
 | `name`            | String        | Event type (see below)                                    |
 | `data`            | String        | JSON payload with event-specific fields                   |
 | `computed`        | String        | JSON with session-level aggregates (see below)            |
-| `computedVersion` | UInt8         | Version for ReplacingMergeTree dedup                      |
+| `computedVersion` | UInt8         | Computation algorithm version                      |
 | `computedDate`    | DateTime64(3) | When computed values were last updated                    |
 | `insertDate`      | DateTime64(3) | Row insertion time                                        |
 
@@ -219,37 +241,12 @@ FROM (
 | `domain`                       | String  | `data.root.domain`                        | Domain                                                       |
 | `title`                        | String  | `data.root.title`                         | Page title                                                   |
 | `currencyCode`                 | String  | `computed.subject.purchase.currencyCode`  | Purchase currency                                            |
-| `subjectPurchaseSum`           | Float64 | `computed.subject.purchase.sum`           | Total purchase amount for this **session**                   |
-| `subjectPurchaseCount`         | Float64 | `computed.subject.purchase.count`         | Number of purchases in this **session**                      |
-| `subjectPurchaseFraction`      | Float64 | `computed.subject.purchase.fraction`      | Fractional attribution weight for this **session**           |
-| `subjectPurchaseFractionalSum` | Float64 | `computed.subject.purchase.fractionalSum` | Fractionally attributed purchase amount for this **session** |
+| `subjectPurchaseSum`           | Float64 | `computed.subject.purchase.sum`           | Total purchase amount for this **project/session**                   |
+| `subjectPurchaseCount`         | Float64 | `computed.subject.purchase.count`         | Number of purchases in this **project/session**                      |
+| `subjectPurchaseFraction`      | Float64 | `computed.subject.purchase.fraction`      | Fractional attribution weight for this **project/session**           |
+| `subjectPurchaseFractionalSum` | Float64 | `computed.subject.purchase.fractionalSum` | Fractionally attributed purchase amount for this **project/session** |
 
-**CRITICAL: The `subject*` columns are per-SESSION aggregates, not per-event.**
-A `subject` (= session UUID) groups multiple events from the same browsing session. The `subjectPurchaseSum` is the total purchase amount for the _entire session_, repeated on every event row in that session. If you naively `sum(subjectPurchaseSum)`, you will massively overcount because every page view, click, and other event in a purchasing session carries the same session-level total.
-
-To get correct totals, always deduplicate by session first:
-
-```sql
--- CORRECT: deduplicate by session
-SELECT currencyCode AS currency, sum(purchase_total) AS session_revenue
-FROM (
-  SELECT subject, currencyCode, max(subjectPurchaseSum) AS purchase_total
-  FROM events_computed FINAL
-  WHERE subjectPurchaseCount > 0
-    AND date >= toDate('2026-03-19')
-    AND date < toDate('2026-04-02') + INTERVAL 1 DAY
-  GROUP BY subject, currencyCode
-)
-GROUP BY currencyCode
-SETTINGS do_not_merge_across_partitions_select_final = 1
-
--- WRONG: this overcounts because each event row repeats the session total
-SELECT sum(subjectPurchaseSum) AS revenue
-FROM events_computed FINAL
-WHERE subjectPurchaseCount > 0
-```
-
-For order revenue and average order value, use purchase-event amounts and purchase counts (see "Computing purchase metrics" below). A session can contain multiple purchases, so purchasing sessions and orders are different denominators.
+**The `subject*` columns are legacy project-local aggregates, repeated on event rows.** They group `(namespace, subject)`, not the full authorized cross-project session. Summing repeated totals overcounts, and deduplicating a zero landing-project total cannot recover sibling checkout revenue. For revenue and conversion reporting use `session_attribution` and the recipes in [references/revenue.md](references/revenue.md).
 
 **`computed` JSON structure:**
 
@@ -273,7 +270,7 @@ The materialized columns are the preferred way to access computed values — the
 
 Some connected integrations expose parameterized **view functions** you can `SELECT` from in this same ClickHouse surface (in addition to the Replo pixel tables above). They are live proxies of that integration's metrics — credentials are injected server-side, so never pass auth tokens or project ids. Required args are always `since` / `until` (`YYYY-MM-DD`, inclusive). Integration not connected (or no data) → **zero rows**, not an error.
 
-Today that includes **Triple Whale** (`triplewhale_metrics_daily` / `_totals` / `_list`) and **Contentsquare** (`contentsquare_metrics_daily` / `_totals` / `_list`). Query these views the same way as any other: inspect a view's columns before writing against it, since each integration names its metrics differently.
+Connected providers include **Triple Whale**, **Contentsquare**, and **Intelligems**. Discover available view names and metrics from the project's analytics schema before querying; do not assume a provider is connected.
 
 ## Third-party Pixel Comparisons
 
@@ -296,7 +293,7 @@ SELECT
   uniqMerge(unique_sessions_state) AS sessions,
   uniqMerge(converting_sessions_state) AS purchasing_sessions
 FROM daily_namespace_rollups
-WHERE day >= today() - 30
+WHERE day >= today() - 29
 GROUP BY day
 ORDER BY day
 ```
@@ -310,64 +307,14 @@ SELECT
   sumMerge(total_revenue_usd_state) AS revenue_usd,
   uniqMerge(unique_purchasing_sessions_state) AS purchasing_sessions
 FROM daily_namespace_purchase_rollups
-WHERE day >= today() - 30
+WHERE day >= today() - 29
 GROUP BY day
 ORDER BY day
 ```
 
-#### Top revenue-driving pages over the last 30 days
+#### Top revenue-driving pages / UTM sources
 
-```sql
-SELECT
-  path,
-  sumMerge(fractional_revenue_usd_state) AS attributed_revenue_usd,
-  countMerge(views_state) AS views,
-  uniqMerge(unique_sessions_state) AS sessions,
-  uniqMerge(converting_sessions_state) AS purchasing_sessions,
-  purchasing_sessions / nullIf(sessions, 0) AS conversion_rate
-FROM daily_page_rollups
-WHERE day >= today() - 30
-GROUP BY path
-ORDER BY attributed_revenue_usd DESC
-LIMIT 20
-```
-
-`fractional_revenue_usd_state` is the right column for "real total revenue split across pages" — it sums to the actual revenue. Use `session_revenue_usd_state` if you specifically want "what's the total revenue of every session that touched this page" (will overcount when summed).
-
-#### Traffic + revenue by UTM source
-
-Merge each table at `(day, namespace, utm_source)` before joining. Keep
-`namespace` in the join: the project scope can include sibling projects that
-share a Shopify store. Joining raw aggregate-state rows can multiply revenue.
-Merge session states again across days so a session is counted once per source.
-
-```sql
-WITH traffic AS (
-  SELECT day, namespace, utm_source,
-    uniqMergeState(unique_sessions_state) AS sessions_state
-  FROM daily_namespace_rollups
-  WHERE day >= today() - 30
-  GROUP BY day, namespace, utm_source
-), purchases AS (
-  SELECT day, namespace, utm_source,
-    sumMerge(total_revenue_usd_state) AS revenue_usd,
-    countMerge(purchase_count_state) AS purchases
-  FROM daily_namespace_purchase_rollups
-  WHERE day >= today() - 30
-  GROUP BY day, namespace, utm_source
-)
-SELECT
-  t.utm_source AS utm_source,
-  uniqMerge(t.sessions_state) AS sessions,
-  sum(p.revenue_usd) AS revenue_usd,
-  sum(p.purchases) AS purchases
-FROM traffic t
-LEFT JOIN purchases p
-  ON t.day = p.day AND t.namespace = p.namespace AND t.utm_source = p.utm_source
-GROUP BY t.utm_source
-ORDER BY revenue_usd DESC
-LIMIT 20
-```
+Use the attributed-page query in [references/revenue.md](references/revenue.md). For UTM attribution, group eligible pageview credits by `JSONExtractString(data, 'root', 'params', 'utm_source')` instead of page. This gives equal pageview credit by observed UTM, not first/last-touch marketing attribution. Use session membership if the user instead wants all revenue from sessions touching a source.
 
 ### Filtering out non-content paths
 
@@ -420,16 +367,16 @@ SELECT
   countMerge(views_state) AS views,
   uniqMerge(unique_sessions_state) AS sessions
 FROM daily_namespace_rollups
-WHERE day >= today() - 30
+WHERE day >= today() - 29
 GROUP BY day
 ORDER BY day ASC
 WITH FILL
-  FROM today() - 30
+  FROM today() - 29
   TO today() + 1
   STEP INTERVAL 1 DAY
 ```
 
-Without `WITH FILL`, a 30-day query that has data on only 18 days returns 18 rows. With `WITH FILL`, you get all 31 rows (including the start and end-of-range days), with `views = 0` / `sessions = 0` on the days where nothing happened.
+Without `WITH FILL`, a 30-day query that has data on only 18 days returns 18 rows. With `WITH FILL`, you get all 30 rows (including the start and end-of-range days), with `views = 0` / `sessions = 0` on the days where nothing happened.
 
 **`STEP INTERVAL` choices:**
 
@@ -469,114 +416,19 @@ SELECT
   sumMerge(total_revenue_usd_state) AS revenue_usd,
   sum(revenue_usd) OVER (ORDER BY day) AS cumulative_revenue_usd
 FROM daily_namespace_purchase_rollups
-WHERE day >= today() - 30
+WHERE day >= today() - 29
 GROUP BY day
 ORDER BY day ASC
 WITH FILL
-  FROM today() - 30
+  FROM today() - 29
   TO today() + 1
   STEP INTERVAL 1 DAY
 INTERPOLATE (cumulative_revenue_usd)
 ```
 
-### Computing purchase metrics
+### Purchase metrics, AOV, page conversions, and UTM attribution
 
-Sum purchase-event amounts, which occur once per purchase after `FINAL` deduplication.
-Keep currencies separate; these raw amounts have not been converted to USD.
-For USD totals over longer ranges, use `daily_namespace_purchase_rollups` above.
-
-```sql
-SELECT
-  toDate(date) AS day,
-  JSONExtractString(data, 'payload', 'currencyCode') AS currency,
-  uniq(subject) AS purchasing_sessions,
-  count() AS purchases,
-  sum(JSONExtractFloat(data, 'payload', 'totalPrice', 'amount')) AS revenue
-FROM events_computed FINAL
-WHERE name = 'replo.purchase'
-  AND date >= toDate('2026-03-19')
-  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
-GROUP BY day, currency
-ORDER BY day, currency
-SETTINGS do_not_merge_across_partitions_select_final = 1
-```
-
-### Average order value
-
-Divide purchase revenue by the number of purchases, keeping currencies separate.
-Dividing by purchasing sessions would measure revenue per purchasing session.
-
-```sql
-SELECT
-  JSONExtractString(data, 'payload', 'currencyCode') AS currency,
-  sum(JSONExtractFloat(data, 'payload', 'totalPrice', 'amount')) /
-    nullIf(count(), 0) AS avg_order_value
-FROM events_computed FINAL
-WHERE name = 'replo.purchase'
-  AND date >= toDate('2026-03-19')
-  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
-GROUP BY currency
-SETTINGS do_not_merge_across_partitions_select_final = 1
-```
-
-### Conversion rate by page
-
-The denominator is all sessions that viewed the page; repeated views count once.
-For page revenue, use the rollup example above and choose fractional attribution
-or full session influence explicitly. Keep revenue currency handling separate
-from this conversion-rate denominator.
-
-```sql
-SELECT
-  domain,
-  path,
-  uniq(subject) AS sessions,
-  uniqIf(subject, subjectPurchaseCount > 0) AS purchasing_sessions,
-  purchasing_sessions / nullIf(sessions, 0) AS conversion_rate
-FROM events_computed
-WHERE name = 'replo.page_view'
-  AND date >= toDate('2026-03-19')
-  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
-  AND path NOT LIKE '/checkout%'
-  AND path NOT LIKE '/cart%'
-  AND path NOT LIKE '/account%'
-GROUP BY domain, path
-ORDER BY sessions DESC
-LIMIT 20
-```
-
-### UTM source attribution
-
-Deduplicate sessions within each source before summing their purchase totals.
-A session seen under multiple sources contributes to each, so this is source
-influence rather than an additive attribution model. Keep raw currencies separate.
-
-```sql
-SELECT
-  utm_source,
-  currencyCode AS currency,
-  count() AS sessions,
-  countIf(purchase_count > 0) AS purchasers,
-  sum(purchase_total) AS session_revenue
-FROM (
-  SELECT
-    JSONExtractString(data, 'root', 'params', 'utm_source') AS utm_source,
-    subject,
-    currencyCode,
-    max(subjectPurchaseCount) AS purchase_count,
-    max(subjectPurchaseSum) AS purchase_total
-  FROM events_computed FINAL
-  WHERE name = 'replo.page_view'
-    AND date >= toDate('2026-03-19')
-    AND date < toDate('2026-04-02') + INTERVAL 1 DAY
-    AND utm_source != ''
-  GROUP BY utm_source, subject, currencyCode
-)
-GROUP BY utm_source, currencyCode
-ORDER BY session_revenue DESC
-LIMIT 10
-SETTINGS do_not_merge_across_partitions_select_final = 1
-```
+Use the shared view and canonical queries in [references/revenue.md](references/revenue.md). AOV is revenue / purchase count, not revenue / purchasing-session count. Never sum repeated `subjectPurchaseSum` values on pageviews. For UTM groups, apply the filter after the shared calculation; recompute session-revenue totals by distinct subject instead of adding overlapping groups.
 
 When matching a **Meta ad set / campaign name** from a screenshot to `utm_term` /
 `utm_campaign`, normalize percent-encoding (`%2B`→`+`, `%3D`→`=`) — Meta often
@@ -631,16 +483,16 @@ ORDER BY day
 ## Important Notes
 
 - **No namespace filter needed.** Queries are automatically scoped to the current project and any workspace siblings that share its Shopify store via ClickHouse row policies on every namespaced table. Adding `WHERE namespace = ...` is unnecessary; to isolate a single storefront, filter by `domain` (rows can span multiple sibling namespaces).
-- **Prefer the `daily_*_rollups` tables** for date-range aggregates over the last 7+ days — they're dramatically faster than `events_computed`. Fall back to `events_computed FINAL` for sub-day granularity, the last 3 hours of data (rollups have a 3-hour lag), or dimensions the rollups don't carry.
+- **Prefer the `daily_*_rollups` tables** for traffic or explicitly project-local aggregates over the last 7+ days — they're dramatically faster than `events_computed`. Fall back to `events_computed FINAL` for sub-day granularity, the last 3 hours of data (rollups have a 3-hour lag), or dimensions the rollups don't carry.
 - **Rollup `*_state` columns must be read with `*Merge`** combinators (`countMerge`, `uniqMerge`, `sumMerge`) and `GROUP BY` your dimensions. Selecting them raw returns binary state blobs.
 - **Rollup revenue is already in USD** (converted via `convert_to_usd` at MV write time). Do not try to convert it again.
-- **Use `WITH FILL STEP INTERVAL ...`** for time-series queries (daily / hourly / weekly grouping) so days with zero activity still appear as zero-valued rows instead of dropping out of the result. See "Filling gaps in time-series queries" under Common Query Patterns.
+- **For Insights dashboard trends, use the bucket spine required by `insights-dashboard`. For other time-series queries, use `WITH FILL STEP INTERVAL ...`** (daily / hourly / weekly grouping) so days with zero activity still appear as zero-valued rows instead of dropping out of the result. See "Filling gaps in time-series queries" under Common Query Patterns.
 - **Don't `toString(...)` the time-bucket column when using `WITH FILL`** — the `FROM` / `TO` bounds are `Date` / `DateTime`, and a `String`-aliased column has no supertype with them. Keep the column native and format for display in your application code, not in SQL.
 - **Be careful with `FINAL` on `events_computed`** — it's a ReplacingMergeTree on Cloud, so `FINAL` opens every active part in the partition range (high-latency S3 reads). Use `FINAL` only when your aggregates can be inflated by duplicates (`count()`, `sum()`); skip it for `uniq*`-only queries. When you do use `FINAL`, append `SETTINGS do_not_merge_across_partitions_select_final = 1` and never wrap `date` in `toDate(...)` — use a half-open range like `date >= toDate('X') AND date < toDate('Y') + INTERVAL 1 DAY` to preserve partition pruning. See the `events_computed` table notes above for details.
 - **Only `SELECT` and `WITH` (CTE) queries are accepted.** `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, etc. will be rejected.
 - **Server-enforced bounds:** queries are limited to **60 seconds of execution time** and **100,000 result rows**. Result-row overflow throws an error — narrow your `WHERE` clause, add `LIMIT`, or aggregate first if you hit the limit.
-- Use materialized columns (`path`, `domain`, `subjectPurchaseSum`, etc.) instead of `JSONExtract` when possible — they're faster.
-- For session-level purchase aggregates (total order value, purchase count), use the materialized columns on `events_computed FINAL`.
+- Use materialized columns (`path`, `domain`, etc.) instead of `JSONExtract` when possible — they're faster.
+- For session-level purchase aggregates and page attribution, use `session_attribution(since, until)`; read the revenue reference first.
 - For product-level purchase data (line items), `ARRAY JOIN` on `JSONExtract(data, 'payload', 'lineItems', 'Array(String)')` against `events_computed FINAL` filtered to `name = 'replo.purchase'`.
 
 ## Granularity Guidance
