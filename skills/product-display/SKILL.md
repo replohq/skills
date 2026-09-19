@@ -10,7 +10,7 @@ tools: find_products, get_product
 
 Products are loaded via `ProductLoader` (from `@replohq/sdk/loaders/product-loader`) using a render-prop pattern. The product data shape is the same regardless of source (Shopify or Replo) — see the **shopify** skill for source-specific data loading and cart patterns.
 
-**CRITICAL:** NEVER hardcode product data. Always use `ProductLoader` to access product data dynamically.
+**CRITICAL:** Never hardcode live product data. Use `ProductLoader` for a single product, or the source-specific collection/recommendation loader for a product list. Reuse the real product objects those loaders return; do not add a per-item fetch when the required data is already loaded.
 
 ## Main Product Display
 
@@ -19,7 +19,7 @@ When building the **main product display** on a page (i.e., the primary product 
 **Required Elements (accessed dynamically from the `product` parameter in the `ProductLoader` render prop):**
 
 - **Title** — Display `product.title`
-- **Price** — Show the current price using `useFormattedPrice(Number(variant.price.amount), variant.price.currencyCode)` from `@replohq/sdk/hooks/use-formatted-price`
+- **Price** — Convert the loader's major-unit amount with `fromMajorUnitsToMinorUnits({ amount: variant.price.amount, currencyCode: variant.price.currencyCode })` from `@replohq/sdk/money`, then pass that integer to `useFormattedPrice(minorUnits, variant.price.currencyCode)` from `@replohq/sdk/hooks/use-formatted-price`
 - **Description** — Use `product.descriptionHtml` with `dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}` to render the rich HTML description
 - **Image** — Display `product.featuredImage` (and variant images when available)
 - **Quantity Selector** — Allow users to select quantity
@@ -52,7 +52,7 @@ When building **upsell products, recommended products, or collection items** (i.
 ## Pricing
 
 - Format all prices using `useFormattedPrice()` from `@replohq/sdk/hooks/use-formatted-price` — never format manually
-- Variant prices are `{ amount: string, currencyCode: string }` — convert `amount` to a number before passing to `useFormattedPrice`
+- Variant prices are decimal major units (`"48.00"` means $48), while `useFormattedPrice` accepts integer minor units (`4800` means $48). Convert with `fromMajorUnitsToMinorUnits` from `@replohq/sdk/money`; do not multiply by 100 because currency exponents vary
 - `variant.compareAtPrice` is available on `FullVariant` as `{ amount: string, currencyCode: string } | null`. When non-null, display a strikethrough "was" price alongside the current price to show the discount
 - Cart-level pricing utilities (e.g., `getCartLinePricing` from `@replohq/sdk/cart/utils/variant-to-cart-line`) also support compare-at pricing for cart line items
 - Only show per-unit breakdowns when there is an explicit unit basis (servings, capsules, packs, cases). If unknown, do **NOT** display per-unit pricing
@@ -89,7 +89,7 @@ Selling plan data is available directly on the product from `ProductLoader`:
 
 ## Product Images
 
-- **`product.featuredImage`** — single hero image, always available for quick display
+- **`product.featuredImage`** — nullable hero image. Check it before reading its URL or dimensions; use an available product/variant image or omit it when none exists
 - **`product.images`** — full array of all product images. Use this for image galleries and carousels on PDPs. Each image has `url`, `altText`, `width`, and `height`
 - Variant-specific images are available via `variant.image` — use these to swap the displayed image when the user changes variant selection
 
@@ -101,6 +101,6 @@ Selling plan data is available directly on the product from `ProductLoader`:
 
 ## Missing Product IDs or No Products
 
-Always use `ProductLoader` and the prefetch pattern, even when the user hasn't specified a product or has no products. See the **shopify** skill for how to search for products when you don't have a specific product ID, and the `find_products` tool for Replo-managed products.
+Discover a real product using the **shopify** skill or `find_products` for Replo-managed products, then wire the loader and matching prefetch arguments. Never invent an ID such as `"1"`.
 
-If the user has no products, use the mock product ID `"1"`. The product data system automatically falls back to a predefined mock product when needed.
+If the catalog is empty, show an explicit no-product state and keep purchase controls unavailable until a real product is bound. Editor-only sample data for unfilled dynamic-route arguments such as `[slug]` is preview scaffolding, not a published-site fallback. Verify the concrete route with a real product before claiming product display or checkout works.

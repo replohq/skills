@@ -199,7 +199,7 @@ FROM (
 **Purchase event `data.payload` fields:**
 
 - `data.payload.totalPrice.amount` — Total order amount (Float64)
-- `data.payload.totalPrice.currencyCode` — Currency code (e.g. `USD`)
+- `data.payload.currencyCode` — Currency code (e.g. `USD`)
 - `data.payload.subtotalPrice.amount` — Subtotal before shipping/tax
 - `data.payload.lineItems` — Array of purchased items
 - `data.payload.lineItems[].title` — Product title
@@ -231,14 +231,17 @@ To get correct totals, always deduplicate by session first:
 
 ```sql
 -- CORRECT: deduplicate by session
-SELECT sum(purchase_total) AS revenue
+SELECT currencyCode AS currency, sum(purchase_total) AS session_revenue
 FROM (
-  SELECT subject, any(subjectPurchaseSum) AS purchase_total
+  SELECT subject, currencyCode, max(subjectPurchaseSum) AS purchase_total
   FROM events_computed FINAL
   WHERE subjectPurchaseCount > 0
-    AND date >= '2026-03-19'
-  GROUP BY subject
+    AND date >= toDate('2026-03-19')
+    AND date < toDate('2026-04-02') + INTERVAL 1 DAY
+  GROUP BY subject, currencyCode
 )
+GROUP BY currencyCode
+SETTINGS do_not_merge_across_partitions_select_final = 1
 
 -- WRONG: this overcounts because each event row repeats the session total
 SELECT sum(subjectPurchaseSum) AS revenue
@@ -246,16 +249,7 @@ FROM events_computed FINAL
 WHERE subjectPurchaseCount > 0
 ```
 
-Alternatively, use `uniq(subject)` to count purchasing sessions and `sumIf` with a single event type to avoid double-counting:
-
-```sql
-SELECT
-  uniqIf(subject, subjectPurchaseCount > 0) AS purchasing_sessions,
-  -- Use session_start (one per session) to avoid overcounting
-  sumIf(subjectPurchaseSum, name = 'replo.session_start' AND subjectPurchaseCount > 0) AS revenue
-FROM events_computed FINAL
-WHERE date >= '2026-03-19'
-```
+For order revenue and average order value, use purchase-event amounts and purchase counts (see "Computing purchase metrics" below). A session can contain multiple purchases, so purchasing sessions and orders are different denominators.
 
 **`computed` JSON structure:**
 
@@ -342,19 +336,35 @@ LIMIT 20
 
 #### Traffic + revenue by UTM source
 
-`daily_namespace_rollups` and `daily_namespace_purchase_rollups` share `(day, namespace, utm_source)` so you can join them at that grain:
+Merge each table at `(day, namespace, utm_source)` before joining. Keep
+`namespace` in the join: the project scope can include sibling projects that
+share a Shopify store. Joining raw aggregate-state rows can multiply revenue.
+Merge session states again across days so a session is counted once per source.
 
 ```sql
+WITH traffic AS (
+  SELECT day, namespace, utm_source,
+    uniqMergeState(unique_sessions_state) AS sessions_state
+  FROM daily_namespace_rollups
+  WHERE day >= today() - 30
+  GROUP BY day, namespace, utm_source
+), purchases AS (
+  SELECT day, namespace, utm_source,
+    sumMerge(total_revenue_usd_state) AS revenue_usd,
+    countMerge(purchase_count_state) AS purchases
+  FROM daily_namespace_purchase_rollups
+  WHERE day >= today() - 30
+  GROUP BY day, namespace, utm_source
+)
 SELECT
   t.utm_source AS utm_source,
-  uniqMerge(t.unique_sessions_state) AS sessions,
-  sumMerge(p.total_revenue_usd_state) AS revenue_usd,
-  countMerge(p.purchase_count_state) AS purchases
-FROM daily_namespace_rollups t
-LEFT JOIN daily_namespace_purchase_rollups p
-  ON t.day = p.day AND t.utm_source = p.utm_source
-WHERE t.day >= today() - 30
-GROUP BY utm_source
+  uniqMerge(t.sessions_state) AS sessions,
+  sum(p.revenue_usd) AS revenue_usd,
+  sum(p.purchases) AS purchases
+FROM traffic t
+LEFT JOIN purchases p
+  ON t.day = p.day AND t.namespace = p.namespace AND t.utm_source = p.utm_source
+GROUP BY t.utm_source
 ORDER BY revenue_usd DESC
 LIMIT 20
 ```
@@ -471,67 +481,101 @@ INTERPOLATE (cumulative_revenue_usd)
 
 ### Computing purchase metrics
 
-Use the materialized columns on `events_computed`:
+Sum purchase-event amounts, which occur once per purchase after `FINAL` deduplication.
+Keep currencies separate; these raw amounts have not been converted to USD.
+For USD totals over longer ranges, use `daily_namespace_purchase_rollups` above.
 
 ```sql
 SELECT
   toDate(date) AS day,
-  uniqIf(subject, subjectPurchaseCount > 0) AS purchasing_sessions,
-  sumIf(subjectPurchaseSum, subjectPurchaseCount > 0) AS revenue
+  JSONExtractString(data, 'payload', 'currencyCode') AS currency,
+  uniq(subject) AS purchasing_sessions,
+  count() AS purchases,
+  sum(JSONExtractFloat(data, 'payload', 'totalPrice', 'amount')) AS revenue
 FROM events_computed FINAL
-WHERE name = 'replo.page_view'
-  AND date >= '2026-03-19'
-GROUP BY day
-ORDER BY day
+WHERE name = 'replo.purchase'
+  AND date >= toDate('2026-03-19')
+  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
+GROUP BY day, currency
+ORDER BY day, currency
+SETTINGS do_not_merge_across_partitions_select_final = 1
 ```
 
 ### Average order value
 
+Divide purchase revenue by the number of purchases, keeping currencies separate.
+Dividing by purchasing sessions would measure revenue per purchasing session.
+
 ```sql
 SELECT
-  sumIf(subjectPurchaseSum, subjectPurchaseCount > 0) /
-    nullIf(uniqIf(subject, subjectPurchaseCount > 0), 0) AS avg_order_value
+  JSONExtractString(data, 'payload', 'currencyCode') AS currency,
+  sum(JSONExtractFloat(data, 'payload', 'totalPrice', 'amount')) /
+    nullIf(count(), 0) AS avg_order_value
 FROM events_computed FINAL
-WHERE name = 'replo.page_view'
-  AND date >= '2026-03-19'
-  AND date <= '2026-04-02'
+WHERE name = 'replo.purchase'
+  AND date >= toDate('2026-03-19')
+  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
+GROUP BY currency
+SETTINGS do_not_merge_across_partitions_select_final = 1
 ```
 
 ### Conversion rate by page
 
+The denominator is all sessions that viewed the page; repeated views count once.
+For page revenue, use the rollup example above and choose fractional attribution
+or full session influence explicitly. Keep revenue currency handling separate
+from this conversion-rate denominator.
+
 ```sql
 SELECT
+  domain,
   path,
   uniq(subject) AS sessions,
   uniqIf(subject, subjectPurchaseCount > 0) AS purchasing_sessions,
-  purchasing_sessions / nullIf(sessions, 0) AS conversion_rate,
-  sumIf(subjectPurchaseSum, subjectPurchaseCount > 0) AS revenue
-FROM events_computed FINAL
+  purchasing_sessions / nullIf(sessions, 0) AS conversion_rate
+FROM events_computed
 WHERE name = 'replo.page_view'
-  AND date >= '2026-03-19'
+  AND date >= toDate('2026-03-19')
+  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
   AND path NOT LIKE '/checkout%'
   AND path NOT LIKE '/cart%'
   AND path NOT LIKE '/account%'
-GROUP BY path
-ORDER BY revenue DESC
+GROUP BY domain, path
+ORDER BY sessions DESC
 LIMIT 20
 ```
 
 ### UTM source attribution
 
+Deduplicate sessions within each source before summing their purchase totals.
+A session seen under multiple sources contributes to each, so this is source
+influence rather than an additive attribution model. Keep raw currencies separate.
+
 ```sql
 SELECT
-  JSONExtractString(data, 'root', 'params', 'utm_source') AS utm_source,
-  uniq(subject) AS sessions,
-  uniqIf(subject, subjectPurchaseCount > 0) AS purchasers,
-  sumIf(subjectPurchaseSum, subjectPurchaseCount > 0) AS revenue
-FROM events_computed FINAL
-WHERE name = 'replo.page_view'
-  AND date >= '2026-03-19'
-  AND utm_source != ''
-GROUP BY utm_source
-ORDER BY revenue DESC
+  utm_source,
+  currencyCode AS currency,
+  count() AS sessions,
+  countIf(purchase_count > 0) AS purchasers,
+  sum(purchase_total) AS session_revenue
+FROM (
+  SELECT
+    JSONExtractString(data, 'root', 'params', 'utm_source') AS utm_source,
+    subject,
+    currencyCode,
+    max(subjectPurchaseCount) AS purchase_count,
+    max(subjectPurchaseSum) AS purchase_total
+  FROM events_computed FINAL
+  WHERE name = 'replo.page_view'
+    AND date >= toDate('2026-03-19')
+    AND date < toDate('2026-04-02') + INTERVAL 1 DAY
+    AND utm_source != ''
+  GROUP BY utm_source, subject, currencyCode
+)
+GROUP BY utm_source, currencyCode
+ORDER BY session_revenue DESC
 LIMIT 10
+SETTINGS do_not_merge_across_partitions_select_final = 1
 ```
 
 When matching a **Meta ad set / campaign name** from a screenshot to `utm_term` /
@@ -549,7 +593,7 @@ SELECT
   uniqIf(subject, name = 'replo.purchase') AS purchased
 FROM events_computed FINAL
 WHERE date >= '2026-03-19'
-  AND date <= '2026-04-02'
+  AND date < toDate('2026-04-02') + INTERVAL 1 DAY
 ```
 
 ### Top products by revenue (from purchase events)
@@ -557,14 +601,15 @@ WHERE date >= '2026-03-19'
 ```sql
 SELECT
   JSONExtractString(line_item, 'variant', 'product', 'title') AS product_title,
+  JSONExtractString(data, 'payload', 'currencyCode') AS currency,
   sum(JSONExtractFloat(line_item, 'finalLinePrice', 'amount')) AS total_revenue,
   sum(JSONExtractUInt(line_item, 'quantity')) AS total_quantity,
-  count() AS order_count
+  uniqExact(id) AS order_count
 FROM events_computed FINAL
 ARRAY JOIN JSONExtract(data, 'payload', 'lineItems', 'Array(String)') AS line_item
 WHERE name = 'replo.purchase'
   AND date >= '2026-03-19'
-GROUP BY product_title
+GROUP BY product_title, currency
 ORDER BY total_revenue DESC
 LIMIT 10
 ```

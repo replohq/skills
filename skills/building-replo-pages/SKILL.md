@@ -136,7 +136,7 @@ Import via `@/components/ui/...`, merge classes with `cn()` from `@/lib/utils`, 
 
 ## Site Components
 
-Components reused across pages live in the site repo's top-level `components/` directory (create it when absent), imported through `@/components/...`. Every top-level `.tsx` file there is surfaced to the user by file name as a Site Component in Site Builder — a product surface with isolated preview and a generated props panel, mentionable in chat. Hard rules: **one standalone file per component** — default export, subcomponents and helpers inlined, no sibling helper files, and no imports of other site files (npm packages, `@/components/ui/*`, `@/lib/utils`, and type-only `@replohq/sdk` imports are fine); every prop serializable and defaulted so the component renders bare. Do not create or link a separate components repository. For the full contract, prop design for the props panel, promoting existing page markup into a component ("use my same header on this page", "make this a component"), and preview recovery, read `references/site-components.md`.
+Components reused across pages live in the site repo's top-level `components/` directory (create it when absent), imported through `@/components/...`. Every top-level `.tsx` file there is surfaced to the user by file name as a Site Component in Site Builder — a product surface with isolated preview and a generated props panel, mentionable in chat. Hard rules: **one standalone file per component** — default export, subcomponents and helpers inlined, no sibling helper files, and no imports of other site files (npm packages, `@/components/ui/*`, `@/lib/utils`, and `@replohq/sdk` types and runtime hooks are fine); every prop serializable and defaulted so the component renders bare. Do not create or link a separate components repository. For the full contract, prop design for the props panel, promoting existing page markup into a component ("use my same header on this page", "make this a component"), and preview recovery, read `references/site-components.md`.
 
 ## Visual audit pass (required before finishing)
 
@@ -155,7 +155,7 @@ both sizes is not done.
 
 ## Definition of Done
 
-Run from the site repo root. Any output from checks 1–5 is a defect — fix it and re-run; check 6 is a review list read against the rule stated under it. (`grep` is portable; `rg` works too.)
+Run from the site repo root. For a scoped edit, limit source checks and repairs to the requested route/components; report unrelated existing defects without expanding the change. Any output from checks 1–5 within scope is a defect — fix it and re-run; check 6 is a review list read against the rule stated under it. (`grep` is portable; `rg` works too.)
 
 ```bash
 SRC="app components"
@@ -202,23 +202,6 @@ Then confirm: **LSP/TypeScript is clean**, **no skeleton placeholder blocks rema
 
 ### Conversion check (every commerce page)
 
-Re-read the page's Conversion Brief and verify the page did every conversion job the brief listed (jobs, not literal order — see step 4) and shipped every rule in the `cro-universal-rules` guidance, the offer structure `cro-offer-structure` prescribes for this product's purchase shape, and every non-negotiable from its vertical file and its page-type file. Fix the gaps rather than reporting them. Two gates are mandatory and are defects when they fail:
-
-- **Fold CTA** — on the page types whose hero carries the primary action (`homepage`, `product`, `landing-offer`), the hero's primary CTA button is fully visible inside the first mobile viewport (390×844) with no scrolling. `article` and `about` defer the ask on purpose, so their substitute is the first CTA appearing within the first two viewports; on `collection`, the product cards are the actionable surface, so the first card is what must appear that fast. Verify visually at 390×844 with Playwright when browser tooling is available; otherwise verify compositionally — the hero's headline + subline + CTA block is compact enough to clear the fold above a tall hero image. This constrains the phone rendering only; the desktop rendering keeps its own native composition.
-- **Reserved primary color** — the primary button color is reserved for the page's one primary action alone; repeated instances of that same CTA down the page are expected and correct. Every other button (nav, cards, quantity steppers, secondary links) uses `variant="outline"`, `"secondary"`, or `"ghost"`. Definition of Done check 6 lists the candidates.
-
-Confirm both in one line per page in your final summary.
-
-### Verifying dynamic routes
-
-A page like `app/products/[slug]/page.tsx` is a dynamic page (one page rendering many URLs); the literal bracket URL (`/products/[slug]`) is not a real page. Never use it to verify.
-
-- On the literal bracket URL, a **404** (pages that look params up in local data) or a **"Sample product" render** (pages built on canopy loaders, which substitute sample data on dev servers) is expected preview scaffolding — not a defect. Don't fix it, don't report it as a problem, and ignore matching bracket-URL 404 lines in dev-server logs: the editor's preview probes that URL itself.
-- A "Sample product" render also does **not** prove real data works. Verify with a concrete URL: take a real value from the page's `generateStaticParams`, the site's data files, connected integration data, or a link on a listing page (e.g. `/products/blue-hat`), then fetch/open that.
-- For pages backed by local data files, export `generateStaticParams()` listing valid params — it documents what the page accepts, makes verification one file-read away, and lets the preview toolbar enumerate real values into a dropdown. Keep the data in a **plain data module that exports a literal typed array** (e.g. `data/posts.ts` → `export const posts = [{ slug: "launch-day", ... }]`) and have `generateStaticParams` derive from it via `.map` (`return posts.map((post) => ({ slug: post.slug }))`). The preview reads this statically, so avoid computing params from fetches, filesystem reads, or transforms — those force a slower LLM guess. Skip `generateStaticParams` entirely for integration-backed pages (a build-time fetch can slow or break publish).
-
-### Conversion check (every commerce page)
-
 Re-read the page's Conversion Brief and verify the page did every conversion job the brief listed (jobs, not literal order) and shipped a coherent offer for this product's purchase shape. Fix the gaps rather than reporting them. Two gates are mandatory and are defects when they fail:
 
 - **Fold CTA** — on the page types whose hero carries the primary action (`homepage`, `product`, `landing-offer`), the hero's primary CTA button is fully visible inside the first mobile viewport (390×844) with no scrolling. `article` and `about` defer the ask on purpose, so their substitute is the first CTA appearing within the first two viewports; on `collection`, the product cards are the actionable surface, so the first card is what must appear that fast. Verify visually at 390×844 when browser tooling is available; otherwise verify compositionally — the hero's headline + subline + CTA block is compact enough to clear the fold above a tall hero image. This constrains the phone rendering only; the desktop rendering keeps its own native composition.
@@ -230,6 +213,6 @@ Confirm both in one line per page in your final summary.
 
 A page like `app/products/[slug]/page.tsx` is a dynamic page (one page rendering many URLs); the literal bracket URL (`/products/[slug]`) is not a real page. Never use it to verify.
 
-- On the literal bracket URL, a **404** (pages that look params up in local data) or a **"Sample product" render** (loaders substitute sample data on dev servers) is expected preview scaffolding — not a defect. Don't fix it, don't report it as a problem, and ignore matching bracket-URL 404 lines in dev-server logs.
+- On the literal bracket URL, a **404** (pages that look params up in local data) or a **"Sample product" render** (loaders substitute sample data on dev servers) is expected preview scaffolding — not a defect. Don't fix it, don't report it as a problem, and ignore matching bracket-URL 404 lines in dev-server logs: the editor's preview probes that URL itself.
 - A "Sample product" render also does **not** prove real data works. Verify with a concrete URL: take a real value from the page's `generateStaticParams`, the site's data files, connected integration data, or a link on a listing page (e.g. `/products/blue-hat`), then fetch/open that.
 - For pages backed by local data files, export `generateStaticParams()` listing valid params — it documents what the page accepts, makes verification one file-read away, and lets the preview toolbar enumerate real values into a dropdown. Keep the data in a **plain data module that exports a literal typed array** (e.g. `data/posts.ts` → `export const posts = [{ slug: "launch-day", ... }]`) and have `generateStaticParams` derive from it via `.map` (`return posts.map((post) => ({ slug: post.slug }))`). The preview reads this statically, so avoid computing params from fetches, filesystem reads, or transforms — those force a slower LLM guess. Skip `generateStaticParams` entirely for integration-backed pages (a build-time fetch can slow or break publish).

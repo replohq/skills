@@ -58,7 +58,7 @@ These asks all mean "promote": "use my same header on this page", "make this hea
 6. **Sweep the stragglers.** If the user asked for consistency ("same header everywhere") and other pages carry drifted copies, swap them too and note the unification in your summary. If they asked about one page, leave the other copies alone but mention they exist.
 7. **Verify** the source page is unchanged and every touched route still renders; the standard gates apply.
 
-Placement for "on every page": import the component on each page. Move it into `app/layout.tsx` only when the user explicitly wants it on every current and future page (a true global header or footer) — and never disturb the runtime layer there (`references/canopy-and-environment.md`).
+Placement for "on every page": import the component on each page. Move it into `app/layout.tsx` only when the user explicitly wants it on every current and future page (a true global header or footer) — preserve the existing `ReploProvider`, `ReploScripts`, and consent attributes in the root layout.
 
 ## Editing an existing Site Component
 
@@ -67,9 +67,6 @@ A Site Component lives at `components/Name.tsx`. Before editing, grep the site f
 Prop values in Site Components are local preview state, not site code. Edit with chat stages a draft with a component file mention card for the user to send. Adding props is chat-led. Use values explicitly supplied in the message; if absent, ask which settings the user wants. Preview controls do not change component defaults or page usages.
 
 The breadcrumb rename popover and the Component name field (saved on blur) run a background session for a real file rename. Check for collisions, update imports/re-exports and usages (including Git-ignored `app/replo-preview/site-components/**/page.dev.jsx` preview imports), preserve the public props and rendering, and verify every affected page. Names in the selector and chat mentions follow the resulting filename. Local preview values are path-scoped and may need to be recreated after a rename; do not promise automatic migration.
-
-## Preview needs an update
-
 
 ## Revealing your work
 

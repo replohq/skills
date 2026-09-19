@@ -235,7 +235,7 @@ These are normal UI primitives, not banned shapes — but if you're about to emi
 - `max-w-7xl` on literally everything; uniform `py-8` everywhere
 - Card grid of image+heading+body+link with no registry source
 - Alternating image/text rows, numbered step lists, quote+avatar blocks, logo strips, stat rows, single-column accordions emitted as generic JSX
-- Filler copy ("Empower your workflow"); fabricated logos, press, awards, certifications, or review counts — a greenfield brand still gets a swappable placeholder review block, per the greenfield proof rule in the `cro-universal-rules` guidance
+- Filler copy ("Empower your workflow"); fabricated logos, press, awards, certifications, or review counts — a greenfield brand still gets a swappable placeholder review block with generic customer voices, without inventing named endorsements or claims of measured results
 - New pages that ignore the existing site's visual language
 - Edits that silently redesign more than the requested surface
 
@@ -244,7 +244,7 @@ These are normal UI primitives, not banned shapes — but if you're about to emi
 Run this as you finish each section (not as a deferred final pass):
 
 - Does it have a distinct conversion job, or is it padding?
-- Did it come from a staged/lifted registry item or a stretched analog? (If neither, it's a defect — redo from a fetched analog or drop the section. Original JSX is not allowed.)
+- For the registry composition path, did it come from a staged/lifted registry item or a stretched analog? If neither, redo from a fetched analog or drop the section. The user-provided markup, chosen mockup, and registry-unavailable fallback paths above retain their exceptions.
 - If this is an edit or follow-on page, does it still feel native to the existing site?
 - Are responsive variants and a11y/interaction wiring intact?
 - Color via tokens only; spacing on the scale; no arbitrary values?

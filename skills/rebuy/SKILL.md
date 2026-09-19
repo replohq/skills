@@ -16,7 +16,9 @@ The pattern has two layers:
 1. **Server component (page):** Uses `PrefetchedLoaders` to fetch data during SSR and seed the React Query cache via `HydrationBoundary`. This ensures the first paint includes the data with no loading state.
 2. **Client component:** Uses a loader component (`RebuyRecommendationsLoader`) with `useSuspenseQuery` under the hood. On initial render it reads the prefetched cache — instant. On subsequent client-side navigations or prop changes, it fetches fresh data automatically.
 
-### Example: Recommended Products Section with Prefetch
+### Example: Recommendation Loader Wiring with Prefetch
+
+This abbreviated example demonstrates prefetch and loader wiring only. Before using it as a storefront product section, add prices with the SDK price formatter, the correct currency, and a product link or a variant-aware purchase action. Use semantic tokens from the site's `app/globals.css` for styling; this example omits price and purchase UI.
 
 ```tsx
 // app/page.tsx (Server Component)
@@ -70,11 +72,6 @@ export function RecommendedProducts() {
                 />
               )}
               <h3 className="mt-2 font-medium">{product.title}</h3>
-              {product.variants?.[0]?.price && (
-                <p className="text-sm text-gray-600">
-                  ${product.variants[0].price.amount}
-                </p>
-              )}
             </div>
           ))}
         </div>

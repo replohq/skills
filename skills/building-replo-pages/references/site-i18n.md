@@ -92,7 +92,7 @@ Give each item a name and let the component own the order:
 const features = [dict.features.bfcm, dict.features.quiz];
 ```
 
-Adding, removing, or reordering items is then a code edit, and translating is only ever a wording edit. Writing a dictionary through the `write` or `edit` tool validates it automatically and reports any violation on the tool result; fix it in the same turn.
+Adding, removing, or reordering items is then a code edit, and translating is only ever a wording edit. After editing, parse each dictionary locally and verify that it contains only nested string maps, with no arrays or numeric keys, and that every locale has the same key set. Fix violations before checking the page.
 
 `app/[lang]/dictionaries.ts` is the loader; keep its map in exact sync with the config's locales:
 

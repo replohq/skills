@@ -2,7 +2,7 @@
 name: apply-branding
 title: Apply a Brand to a Site
 summary: Restyle a site's colors, fonts, and logo from its design tokens.
-description: "Use when restyling a Replo site to match a brand — token-first edits to globals.css and the layout font and logo, with hardcoded-color audits and contrast checks. Never repaint page components."
+description: "Use when applying a brand to a Replo site, page, or section, including requested colors, fonts, or logo. Preserve the requested surface and attributes."
 tools: list_projects, list_sites, create_api_key, publish_site
 ---
 
@@ -10,15 +10,15 @@ tools: list_projects, list_sites, create_api_key, publish_site
 
 Re-skin a Replo site with a brand. This is almost entirely a **token edit**: Replo sites are built token-first, so every color/font/radius flows from the semantic token layer in `app/globals.css`. Applying a brand means rewriting those **token values** (plus the font and logo) — **not** repainting page components.
 
-You still use judgment to map the brand palette onto the semantic roles and to choose readable foregrounds, but you should not be hand-editing section JSX. If you find yourself opening `app/page.tsx` and swapping hex codes, stop — that means either the site wasn't built token-first or you're working the wrong layer.
+You still use judgment to map the brand palette onto the semantic roles and to choose readable foregrounds, but a site-wide application should not require hand-editing section JSX. Keep literal colors in the token layer.
 
 ## Working on a Replo site from your own machine
 
 A Replo site is a Next.js repo you can clone and edit directly:
 
 1. Resolve the site: `list_projects` → `list_sites` (use the default site unless the user names one). Each site returns a `clone_url`.
-2. Mint a key with `create_api_key` (include `repo.write` when you will push) and clone per the [Replo Git docs](/git/get-started).
-3. `pnpm install && pnpm dev` gives a local preview. The Replo agent is a second writer of the same repo — pull before editing and push when done; never force-push.
+2. Follow the **local-development** skill to mint a key, clone, and prepare any requested push. Include `repo.write` only when the user asks you to push.
+3. `pnpm install && pnpm dev` gives a local preview. The Replo agent is a second writer of the same repo — pull before editing and push only when the user asks; never force-push.
 4. Publish with the `publish_site` tool only when the user explicitly asks.
 
 ## Getting the brand
@@ -30,7 +30,11 @@ The project's brand kit lives in Brand Studio, outside the site repo. There is n
 
 For the logo, use a URL that actually resolves; if there is no usable logo, leave the current logo untouched and say so.
 
-## Steps — edit the token layer, not the pages
+## Scope
+
+Apply only the named surface and attributes. For a page or section, reuse or add semantic tokens in `globals.css` and change only that target’s token consumption or scoped `next/font` use. Preserve shared token values, the global font, and the shared header. For colors/fonts-only work, leave the logo alone. Skip unrelated steps and assertions.
+
+## Site-wide steps — edit the token layer
 
 Make essentially all changes in **three places**:
 
@@ -50,7 +54,7 @@ Make essentially all changes in **three places**:
 
 ## Post-apply assertions (required — do not skip)
 
-These exist because a token rewrite can be 100% correct and still be **invisible** if a page hardcodes its colors, or a brand can be applied with broken text contrast. Run all of them:
+Run the assertions for the requested attributes and surface. Audit all pages for a site-wide application; limit repairs to the target for a page or section request.
 
 - **Hardcoded-color audit.** Grep the site's `app/` for raw color literals that bypass the token layer:
 
@@ -59,7 +63,7 @@ These exist because a token rewrite can be 100% correct and still be **invisible
   rg -n "#[0-9A-Fa-f]{3,8}\b|rgba?\(|bg-\[#|text-\[#" app --glob '!**/globals.css'
   ```
 
-  Every hit is a component painting around your tokens. Repoint each at the correct semantic token (and its paired foreground). `globals.css` is the only file allowed to hold literal color values. Re-run until the only hits are intentional non-brand values (e.g. a CDN icon URL).
+  Within the requested surface, repoint hardcoded brand colors at the correct semantic token (and its paired foreground). `globals.css` is the only file allowed to hold literal color values. Re-run until the only hits are intentional non-brand values (e.g. a CDN icon URL).
 
 - **Contrast.** For each surface/foreground pair you set (`background`/`foreground`, `card`/`card-foreground`, `primary`/`primary-foreground`, `secondary`, `muted`, `accent`), confirm the text pair clears a legible contrast bar in **both** `:root` and `.dark`. Fix any pair that doesn't before finishing.
 - **Font.** Confirm the brand font (or your documented fallback) is what actually renders, not the scaffold default left behind.
@@ -71,4 +75,4 @@ Only claim what you actually verified. If you could not load a visual preview of
 
 ## Output
 
-Tell the user what changed in plain language — name the files you touched (typically just `globals.css`, `layout.tsx`, and the logo). Keep it short and specific. Push your changes when done so the Replo agent and dashboard see them; publish only if the user asked.
+Tell the user what changed in plain language — name the files you touched (typically just `globals.css`, `layout.tsx`, and the logo). Keep it short and specific. Push only when the user asks so the changes are ready for the next publish; publish only if the user asked.

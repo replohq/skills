@@ -19,11 +19,14 @@ integrations tools:
   own tool with its own input schema — the product search, collection get, and
   metafield-definition list operations are the usual starting points. Every one
   takes a `reploProjectId`.
-- These tools are advertised whether or not the project has connected Shopify,
-  so call the one you need and let the call report the connection state.
+- Tools depend on the available integration surface; absence from the tool list
+  is not evidence that Replo cannot connect Shopify. Check integration status
+  when the operation is missing or the call reports a connection error.
 - When a call fails with a connection error, Shopify is not connected yet. Call
   `get_integration_status` with `integrationKey: "shopify"`, give the user the
   `connectUrl` it returns, and poll until it reports connected.
+
+Use the discovered public read operation for each lookup described below, following its current input schema and passing `reploProjectId`. If an operation remains unavailable after checking connection status, use a Replo session as a fallback. Object-type metadata can also be requested through a session when no public discovery operation exposes it.
 
 Writes to the store are not on the public surface. For those, prompt
 `start_agent_session` with what you need.
@@ -145,7 +148,7 @@ export default function FeaturedProductPage() {
 
 ### Alternative: Dynamic Route with Slug
 
-Use this pattern **only** when the product is determined dynamically from the URL — for example, a dynamic page that can render any product by its URL slug. The folder name uses Next.js dynamic route syntax where brackets are literal in the folder name (the folder is literally named `[slug]`), and Next.js maps the URL segment to `params.slug` at runtime. For example, visiting `/products/cool-sneakers` passes `"cool-sneakers"` as `params.slug`. Pass that value to the loader as `handle` (Shopify resolves products by handle); the `[slug]` segment name is the standard dynamic-route shape shared with Replo Products.
+Use this pattern **only** when the product is determined dynamically from the URL — for example, a dynamic page that can render any product by its URL slug. The folder name uses Next.js dynamic route syntax where brackets are literal in the folder name (the folder is literally named `[slug]`), and Next.js supplies the URL segment through the page's asynchronous `params`. For example, visiting `/products/cool-sneakers` yields `slug: "cool-sneakers"` after awaiting `params`. Pass that value to the loader as `handle` (Shopify resolves products by handle); the `[slug]` segment name is the standard dynamic-route shape shared with Replo Products.
 
 **Server component** (`app/products/[slug]/page.tsx`):
 
@@ -154,17 +157,18 @@ import { ProductDetail } from "@/app/components/ProductDetail";
 import { DATA_LOADER_KEYS } from "@replohq/sdk/loaders/loader-keys";
 import { PrefetchedLoaders } from "@replohq/sdk/loaders/prefetch-loaders";
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   return (
     <PrefetchedLoaders
       queries={[
         {
           loaderKey: DATA_LOADER_KEYS.SHOPIFY_PRODUCT,
-          args: { handle: params.slug },
+          args: { handle: slug },
         },
       ]}
     >
-      <ProductDetail handle={params.slug} />
+      <ProductDetail handle={slug} />
     </PrefetchedLoaders>
   );
 }
@@ -288,12 +292,12 @@ Search tools are `completeness: "partial"` (they return id, title, handle, image
 
 ### Getting full product details in conversation
 
-When the user asks about variant information, option names, pricing, or other details not available from search, use a session product lookup with the product's GID. This returns a full `Product` object (including `variants`, `options`, `descriptionHtml`) without needing to involve data loaders or page code. Limit this to one product at a time to avoid context explosion.
+When the user asks about variant information, option names, pricing, or other details not available from search, use the public product lookup operation with the product's GID. This returns a full `Product` object (including `variants`, `options`, `descriptionHtml`) without needing to involve data loaders or page code. Limit this to one product at a time to avoid context explosion.
 
 Example flow:
 
-1. Ask a session to search the catalog for "hoodie" → partial results with id, title, handle, image.
-2. User asks "what variants does this have?" → a session product lookup by GID → full product with variants and options.
+1. Search the catalog for "hoodie" with the public product search operation → partial results with id, title, handle, image.
+2. User asks "what variants does this have?" → the public product lookup operation by GID → full product with variants and options.
 
 ### Discovery-then-load pattern (for page rendering)
 
@@ -304,8 +308,8 @@ Example flow:
 
 Discount codes are the promo codes a customer types at checkout (e.g. `SUMMER20`). Two read-only tools expose them; both use the Admin API and cover code-based discounts only (not automatic discounts).
 
-- a session discount search — list or search discounts. Call with **no `query`** to list every discount code. Pass a keyword or a field qualifier like `status:active`, `status:expired`, `status:scheduled`, or `title:summer` to filter. Returns partial `DiscountCode` objects (`id`, `codes`, `title`, `status`, `summary`). Never pass placeholders like `"all"` or `"*"` — they are treated as literal search terms.
-- a session discount lookup — full detail for one discount. Look it up by its GID (`discountGid`, the `id` from search) **or** by the exact `code` string a customer would enter. Provide exactly one. Returns the codes, status, human-readable `summary`, discount type, start/end dates, usage limit, times used, and whether it applies once per customer.
+- the public discount search operation — list or search discounts. Call with **no `query`** to list every discount code. Pass a keyword or a field qualifier like `status:active`, `status:expired`, `status:scheduled`, or `title:summer` to filter. Returns partial `DiscountCode` objects (`id`, `codes`, `title`, `status`, `summary`). Never pass placeholders like `"all"` or `"*"` — they are treated as literal search terms.
+- the public discount lookup operation — full detail for one discount. Look it up by its GID (`discountGid`, the `id` from search) **or** by the exact `code` string a customer would enter. Provide exactly one. Returns the codes, status, human-readable `summary`, discount type, start/end dates, usage limit, times used, and whether it applies once per customer.
 
 These are for **discovering and inspecting** discount codes in conversation. Applying a code to a cart is a separate, storefront-side concern handled by `useCart().updateDiscountCodes` in page code — see **Cart Operations**.
 
@@ -313,19 +317,19 @@ These are for **discovering and inspecting** discount codes in conversation. App
 
 Metafields hold a store's custom data — ingredients, size charts, care instructions, spec tables. Two separate things are involved and confusing them is the most common mistake:
 
-- A **definition** is the store-wide declaration that a metafield exists (namespace, key, type). Read with a session metafield-definitions listing.
-- A **value** is what a specific product/variant/collection actually stores in it. Read with a session metafield-value read, or inline via a session product lookup / a session collection lookup.
+- A **definition** is the store-wide declaration that a metafield exists (namespace, key, type). Read with the public metafield-definitions list operation.
+- A **value** is what a specific product/variant/collection actually stores in it. Read with the public metafield-value read operation, or inline via the public product lookup operation / the public collection lookup operation.
 
 ### Always read a value before rendering one
 
 A definition's `type` does not tell you the shape of the data. `rich_text_field` is a JSON document, `list.product_reference` is a JSON array of GID strings, `dimension` is `{"value":5,"unit":"cm"}`. **Never write rendering code from the type name alone** — fetch a real value first and look at it.
 
 ```
-Ask a session: "List the product metafield definitions on the connected store."
+Public metafield-definitions list: ownerType = product
   → { namespace: "custom", key: "ingredients", type: { name: "list.single_line_text_field" }, storefrontAccess: "PUBLIC_READ" }
 
-Ask a session: "Read the custom.ingredients metafield on product
-gid://shopify/Product/123."
+Public metafield-value read: owner GID = gid://shopify/Product/123,
+  namespace = custom, key = ingredients
   → { metafields: [{ namespace: "custom", key: "ingredients", type: "list.single_line_text_field", value: "[\"Cocoa\",\"Sugar\"]" }] }
 ```
 
@@ -335,14 +339,14 @@ gid://shopify/Product/123."
 
 | Need                                                      | Tool                                                                                                       |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| What metafields exist on this store?                      | ask a session to list metafield definitions for that `ownerType` — `ownerType` is `product`, `variant`, or `collection` |
-| Values for a product, alongside its other data            | ask a session for the product with metafield identifiers                                               |
-| Values for a collection, alongside its other data         | ask a session for the collection with metafield identifiers                                         |
-| Values for a **variant**, or just metafields on their own | ask a session for metafield values by owner GID                                                        |
+| What metafields exist on this store?                      | public metafield-definitions list operation for that `ownerType` — `ownerType` is `product`, `variant`, or `collection` |
+| Values for a product, alongside its other data            | public product lookup with metafield identifiers                                               |
+| Values for a collection, alongside its other data         | public collection lookup with metafield identifiers                                         |
+| Values for a **variant**, or just metafields on their own | public metafield-value read by owner GID                                                        |
 
 Omit `metafieldIdentifiers` / `identifiers` to get every metafield on the owner (capped at 50). Pass them to fetch a targeted subset — do this once you know which keys you want, since it is cheaper and keeps responses small.
 
-Variant metafields are deliberately **not** returned by a session product lookup. A product can have 100 variants, and fetching metafields for all of them in one query exceeds Shopify's query cost limit. Use a session metafield-value read with a variant GID instead.
+Variant metafields are deliberately **not** returned by the public product lookup operation. A product can have 100 variants, and fetching metafields for all of them in one query exceeds Shopify's query cost limit. Use the public metafield-value read operation with a variant GID instead.
 
 ### `storefrontAccess` — read this before promising the user a metafield on a page
 
@@ -431,23 +435,23 @@ Rules specific to metafields on pages:
 
 - **Check `storefrontAccess` first.** Loaders read through the Storefront API. A definition with `storefrontAccess: "NONE"` returns nothing here no matter what you pass. Confirm it is `PUBLIC_READ` before building.
 - **Always handle the missing case.** A metafield that is defined but unset on a given product is simply absent from the array — that is normal, not an error.
-- **Parse according to `type`.** Read a real value with a session metafield-value read first so you know the shape you are parsing.
+- **Parse according to `type`.** Read a real value with the public metafield-value read operation first so you know the shape you are parsing.
 
-`CollectionLoader` does **not** accept metafield identifiers yet — collection metafields are readable with a session collection lookup in conversation, but cannot be rendered on a page.
+`CollectionLoader` does **not** accept metafield identifiers yet — collection metafields are readable with the public collection lookup operation in conversation, but cannot be rendered on a page.
 
 ## Metaobjects
 
 Metaobjects are how merchants model **reusable structured content** that is not a product or collection — size charts, ingredient panels, care instructions, FAQ blocks, brand modules. Where a metafield hangs a single custom value off an existing product, a metaobject is a standalone record with its own fields, reusable across many products.
 
-Same definition/value split as metafields, with one hard constraint on top: **Shopify has no query that lists metaobjects across types.** Every read needs a `type` handle, and the only way to learn what types a store has is a session metaobject-definitions listing. Always start there.
+Same definition/value split as metafields, with one hard constraint on top: **Shopify has no query that lists metaobjects across types.** Every read needs a `type` handle, and the only way to learn what types a store has is the public metaobject-definitions list operation. Always start there.
 
 ```
-Ask a session: "List the metaobject definitions on the connected store."
+Public metaobject-definitions list
   → { type: "size_chart", displayNameKey: "title", storefrontAccess: "PUBLIC_READ",
       fieldDefinitions: [{ key: "title", type: "single_line_text_field", required: true },
                          { key: "chart", type: "json", required: false }] }
 
-Ask a session: "List the size_chart metaobjects."
+Public metaobject list: type = size_chart
   → { metaobjects: [{ handle: "hoodie-sizing", displayName: "Hoodie Sizing",
                       fields: [{ key: "title", type: "single_line_text_field", value: "Hoodie" }] }] }
 ```
@@ -458,13 +462,13 @@ As with metafields, `value` is **always a string** — parse it according to `ty
 
 | Need                                              | Tool                                                       |
 | ------------------------------------------------- | ------------------------------------------------------------ |
-| What metaobject types does this store have?       | ask a session to list metaobject definitions                  |
-| All entries of one type                           | ask a session to list metaobjects of that `type`                       |
-| One entry, by GID or by type + handle             | ask a session for one metaobject by GID, or by type + handle |
+| What metaobject types does this store have?       | public metaobject-definitions list operation                  |
+| All entries of one type                           | public metaobject list operation with that `type`                       |
+| One entry, by GID or by type + handle             | public metaobject lookup by GID, or by type + handle |
 
 ### Resolving a `metaobject_reference` metafield
 
-A metafield whose type is `metaobject_reference` stores a bare metaobject GID as its string value; `list.metaobject_reference` stores a JSON array of them. Neither tells you what is inside. Resolve each GID with ask a session to resolve that GID.
+A metafield whose type is `metaobject_reference` stores a bare metaobject GID as its string value; `list.metaobject_reference` stores a JSON array of them. Neither tells you what is inside. Resolve each GID with the public metaobject lookup operation.
 
 ### Two gates before a metaobject can render on a page
 
@@ -485,10 +489,10 @@ Storefront metaobjects have no `displayName` (that is Admin-only), and `fields` 
 
 - **Always prefer the prefetch pattern** (server component with `PrefetchedLoaders` wrapping a client loader component). Only skip prefetching when the data is entirely driven by client-side interaction with no server-known initial value.
 - **Default to ID-based loading** (`productId`) when you know which product to display. Only use handle-based loading for dynamic routes where the product is determined by the URL.
-- Use a Replo session for catalog discovery in conversation. Admin searches return partial Product/Collection objects with `id` (GID), `title`, `handle`, and `featuredImage`.
-- Use a session product lookup when you need full product details (variants, options, pricing) for conversational answers — not for page rendering.
-- Never write code that renders a metafield without first reading an actual value with a session metafield-value read — the type name does not tell you the shape of the data. See **Metafields**.
-- For structured content that is not a product or collection (size charts, ingredient lists, FAQ blocks), check a session metaobject-definitions listing before telling the user the data is not available. See **Metaobjects**.
+- Use public Shopify read operations for catalog discovery in conversation. Admin searches return partial Product/Collection objects with `id` (GID), `title`, `handle`, and `featuredImage`.
+- Use the public product lookup operation when you need full product details (variants, options, pricing) for conversational answers — not for page rendering.
+- Never write code that renders a metafield without first reading an actual value with the public metafield-value read operation — the type name does not tell you the shape of the data. See **Metafields**.
+- For structured content that is not a product or collection (size charts, ingredient lists, FAQ blocks), check the public metaobject-definitions list operation before telling the user the data is not available. See **Metaobjects**.
 - Use Storefront loaders for rendering page data (`ProductLoader`, `CollectionLoader`, `CollectionProductsLoader` with the appropriate `loaderKey`). These return full objects.
 - For cart operations, use `product.variants[N].id` as the merchandiseId — this is the same Shopify variant GID returned by loaders.
 - For dynamic pages, read route params with `useParams()` or the page `params` prop and pass them into loader component props.
@@ -560,7 +564,7 @@ function ProductCard({ productId }: { productId: string }) {
 
 ### Subscriptions (selling plans)
 
-Supported natively when the checkout provider is `shopify` (on `stripe` the plan is dropped at checkout, so switch the provider first). Subscription apps (Skio, Recharge, Loop, …) create Shopify selling plans, which the loaders and cart carry through to Shopify Checkout. Never tell the user subscriptions can't be sold from a Replo page, and never route subscribe traffic to the Shopify PDP.
+Supported natively when the checkout provider is `shopify` (on `replo` the plan is dropped at checkout, so switch the provider first). Subscription apps (Skio, Recharge, Loop, …) create Shopify selling plans, which the loaders and cart carry through to Shopify Checkout. Never tell the user subscriptions can't be sold from a Replo page, and never route subscribe traffic to the Shopify PDP.
 
 - `product.sellingPlanGroups[].sellingPlans[]` lists the plans; `variant.sellingPlanIds` lists which of them the variant is eligible for.
 - Pass `sellingPlanId` on the line to `addToCart` / `buyNow`; omit it for one-time purchase. The saved line carries `sellingPlanAllocation` with the adjusted price.

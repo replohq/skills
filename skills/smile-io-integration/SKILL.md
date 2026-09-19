@@ -45,11 +45,10 @@ export function VipTierBenefits() {
           {vipTiers.map((tier) => (
             <div
               key={tier.id}
-              className="rounded-xl border p-6 text-center"
-              style={{ borderColor: tier.color ?? "#e5e7eb" }}
+              className="rounded-xl border border-border p-6 text-center"
             >
               <h3 className="text-xl font-bold">{tier.name}</h3>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {tier.minimumPointsRequired === 0
                   ? "Starting tier"
                   : `${tier.minimumPointsRequired.toLocaleString()} points to unlock`}
@@ -104,9 +103,9 @@ export function HowToEarnPoints() {
           <h2 className="text-2xl font-bold">How to Earn Points</h2>
           <ul className="space-y-3">
             {earningRules.map((rule) => (
-              <li key={rule.id} className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+              <li key={rule.id} className="flex items-center justify-between rounded-lg bg-muted text-muted-foreground p-4">
                 <span className="font-medium">{rule.name}</span>
-                <span className="text-sm font-semibold text-green-600">
+                <span className="text-sm font-semibold text-foreground">
                   {rule.pointsAwarded != null
                     ? `+${rule.pointsAwarded} ${rule.pointsAwardedType === "per_dollar" ? "pts/$" : "pts"}`
                     : "Variable"}
@@ -144,11 +143,11 @@ export function RewardsCatalog() {
             {rewards.map((reward) => (
               <div key={reward.id} className="rounded-xl border p-4 text-center">
                 <h3 className="font-semibold">{reward.name}</h3>
-                <p className="mt-1 text-lg font-bold text-purple-600">
+                <p className="mt-1 text-lg font-bold text-foreground">
                   {reward.pointsCost.toLocaleString()} pts
                 </p>
                 {reward.discountValue && (
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     ${reward.discountValue} off
                   </p>
                 )}

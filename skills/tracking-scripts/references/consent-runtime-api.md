@@ -178,8 +178,9 @@ export function MyConsentBanner() {
 Notes:
 
 - The banner must be a client component (`"use client"`) because it uses a hook.
-- Don't gate the banner's own visibility on anything other than `mode` and
-  `decidedAt` — `<ReploScripts>` handles gating the actual tracking scripts.
+- Hide the native banner when `cmp` is `cookiebot` or `external`, `mode` is
+  `off`, or `decidedAt` is non-null. `<ReploScripts>` handles gating the actual
+  tracking scripts.
 - After `accept` / `reject` / `updateCategories`, the consent store persists the
   choice to the `replo_consent` cookie and the `visitorConsentCollected` event
   fires automatically.

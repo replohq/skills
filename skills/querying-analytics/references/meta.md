@@ -12,12 +12,17 @@ not proof that the Replo pixel is broken.
 | --- | --- | --- |
 | Replo first-party (`replo.*` in ClickHouse) | Browser events from the Replo storefront pixel | Yes — `query_replo_analytics` |
 | Meta Pixel on the Replo site (`fbq`) | Outbound browser events to Meta | Install/configure via tracking-scripts; **no Ads Insights pull** |
-| Meta Ads Manager | Ad-attributed results (pixel + CAPI + modeled), inside an attribution window | **No API** — only what the user pastes / screenshots |
+| Meta Ads Manager | Ad-attributed results (pixel + CAPI + modeled), inside an attribution window | No direct Replo public tool; use `start_agent_session` with a connected Meta integration, user-provided exports/screenshots, or an independently connected Meta tool |
 | Shopify → Meta (native channel / CAPI) | Server-side checkout & purchase for Shopify-hosted checkout | Not in Replo analytics |
 
-There is **no Meta Marketing API / Ads Insights integration**. You cannot fetch
-Ads Manager “Website adds to cart” from tools. You can only query Replo
-first-party (and other third-party insights sources, such as Triplewhale, Northbeam, etc) from analytics tools.
+Replo's public tools, including `query_replo_analytics`, do not directly expose
+Meta Ads Insights. When Meta is connected in Replo, use `start_agent_session`
+to ask the Replo agent to retrieve the relevant Ads Insights. Otherwise ask for
+an Ads Manager export or screenshot, or use an independently authenticated Meta
+tool already available in your own agent environment.
+Do not infer that such a tool exists from the Replo connection. Keep Ads Manager
+results separate from Replo first-party data and the Triple Whale/Contentsquare
+views documented in querying-analytics.
 
 Outbound Meta standard events from `MetaSink`:
 
@@ -234,6 +239,7 @@ lost the click id.
    checkout; if yes, treat Ads Manager checkouts/purchases as mostly
    **Shopify-domain** events.
 6. Only claim on-page double-count after the live `fbq` test above.
-7. Do not invent Meta Ads Insights queries — we do not have that API.
-   Prefer asking the user for Events Manager domain breakdown when ATC still
-   diverges after (5)–(6).
+7. Obtain Ads Insights metrics from a user export/screenshot or an independently
+   connected Meta tool, as described above.
+   If ATC still diverges after (5)–(6), ask for an Events Manager domain
+   breakdown when that detail is unavailable through the connected source.

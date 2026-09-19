@@ -334,9 +334,6 @@ already gates them at injection. Full surface is documented in
 - Don't invent provider `type` values; use the exact PascalCase keys above.
 - Don't set `requiredConsent` on known providers unless explicitly asked.
 - Don't put both `src` and `body` on a custom entry.
-- Don't invent provider `type` values; use the exact PascalCase keys above.
-- Don't set `requiredConsent` on known providers unless explicitly asked.
-- Don't put both `src` and `body` on a custom entry.
 
 ## Quick reference
 

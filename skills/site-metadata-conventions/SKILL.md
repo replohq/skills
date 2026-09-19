@@ -27,11 +27,11 @@ export const metadata: Metadata = {
 
 Rules:
 
-- All metadata edits go in this single object.
+- Site-wide title, description, social preview, favicon, and noindex edits go in this single metadata object. Page-specific overrides belong in that page's metadata export.
 - If `metadata` doesn't exist yet, create it. Add the `import type { Metadata } from "next";` import if it's missing.
 - Preserve any existing keys you aren't asked to change.
 - When asked to remove a field, **delete the key entirely** from the object — don't set it to `null` or `undefined`.
-- Don't touch the JSX rendered by the layout. Don't modify any file other than `layout.tsx` for these edits.
+- For those site-wide metadata fields, edit only `layout.tsx` and preserve its rendered JSX. The `llms.txt`, `robots.txt`, and `sitemap.xml` sections below define their own file changes.
 - Never write `<head>` tags or `<meta>` tags by hand in JSX. App Router renders them from the `metadata` export.
 
 > The same `layout.tsx` also hosts the tracking-scripts / cookie-consent layer (`<ReploScripts>`, the consent banner, and the `data-replo-consent-mode` attribute). Those are owned by the **`tracking-scripts`** skill — when adding, removing, or changing analytics/marketing scripts or consent behavior, follow that skill and leave the consent layer untouched during metadata edits.
@@ -172,7 +172,7 @@ Don't commit favicon files directly to the repo (e.g. `app/icon.png`, `app/favic
 - Don't generate or guess URLs for OG images or favicons. Always use a URL returned by `upload_asset`.
 - Don't commit image binaries to the project repo as a substitute for uploading them. `upload_asset` is always the right path for OG images, favicons, and any other site-metadata binary.
 - Don't put metadata in the root `page.tsx` for site-wide settings — `layout.tsx` is the site-wide root. Page-level overrides belong in their own page files, but "site settings" always means the root `layout.tsx`.
-- Don't modify multiple files for a single metadata change. One tool call to edit the root `layout.tsx` is enough.
+- A site-wide metadata-field change needs only the root `layout.tsx`. For SEO route ownership changes, follow the file operations in the `robots.txt and sitemap.xml` section, including swapping robots owner files together.
 - Don't create `src/app/`. Site App Router files belong under `app/`.
 
 ## Quick reference

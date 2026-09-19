@@ -51,7 +51,7 @@ export function ProductReviews({ shopifyProductId }: { shopifyProductId: string 
                 <span className="font-semibold">{review.title}</span>
               </div>
               {review.reviewerName && (
-                <p className="text-sm text-gray-500">by {review.reviewerName}</p>
+                <p className="text-sm text-muted-foreground">by {review.reviewerName}</p>
               )}
               <p className="mt-2">{review.body}</p>
             </div>
@@ -107,11 +107,11 @@ export function StarRating({ shopifyProductId }: { shopifyProductId: string }) {
     >
       {(aggregate) => (
         <div className="flex items-center gap-2">
-          <span className="text-yellow-500">
+          <span className="text-foreground">
             {"★".repeat(Math.round(aggregate.reviewAverageValue))}
             {"☆".repeat(5 - Math.round(aggregate.reviewAverageValue))}
           </span>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {aggregate.reviewAverageValue.toFixed(1)} ({aggregate.reviewCount} reviews)
           </span>
         </div>

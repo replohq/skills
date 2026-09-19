@@ -57,7 +57,7 @@ The brand should come from this Figma file: <figma-url>. Check whether the Figma
 Applying the brand to a site is a design-token change on that site, not a rebuild:
 
 - **Via session** (default): `Apply the project's brand to the <site> site.` The agent rewrites the site's design tokens, font, and logo, and runs its own contrast and coverage checks.
-- **Via local edit**: if you are already working in a clone of the site repo, follow the [Applying a brand to a site](/mcp/skills/apply-branding) skill instead.
+- **Via local edit**: if you are already working in a clone of the site repo, follow the **apply-branding** skill instead.
 
 ## Reading the brand
 

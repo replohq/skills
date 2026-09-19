@@ -44,9 +44,7 @@ Before calling `publish_site`, call `list_sites` to get site IDs.
 
 - If the prompt provides a specific `siteId`, that IS the site to publish. Do not ask — the user already chose this site.
 - Otherwise, if the user named a site (e.g. "publish the blog"), match by site name.
-- Otherwise, apply the default-site rule from your system prompt, which ends in
-  asking the user when nothing resolves. Never guess — publishing the wrong
-  site overwrites its live deployment.
+- Otherwise, use the site already selected in this conversation, or the sole site returned by `list_sites`. If multiple sites remain possible, ask the user which one to publish. Never guess — publishing the wrong site overwrites its live deployment.
 
 Pass the `siteId` to the `publish_site` tool, plus `promoteRoutes` only when the user asked to publish a subset of pages (see below). The tool finds the site's folder on disk itself, so never go looking for it.
 
