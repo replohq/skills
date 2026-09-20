@@ -27,14 +27,17 @@ with a change going live.
 
 ## Set up
 
-1. Resolve the site: `list_projects`, then `list_sites` for that project. Use the
-   default site unless the user names one, and put its `clone_url` in
-   `REPLO_GIT_URL`. People find the same URL in **Site Settings** >
-   **General** > **Advanced** > **Git clone URL**.
-2. Mint a key with `create_api_key`: `repo.read`, plus `repo.write` only when the
-   user will push. Write it straight to `REPLO_API_KEY`; never print it, commit
-   it, or put it in a URL. Keys minted this way carry only repository scopes, so
-   they can clone and push but cannot publish.
+1. Resolve the site. If the user supplied a site ID, put the URL above in
+   `REPLO_GIT_URL`; no MCP or dashboard access is needed. Otherwise, call
+   `list_projects`, then `list_sites` for that project. Use the default site
+   unless the user names one, and put its `clone_url` in `REPLO_GIT_URL`. People
+   find the same URL in **Site Settings** > **General** > **Advanced** > **Git
+   clone URL**.
+2. Use an existing `REPLO_API_KEY` when the user supplied one with the required
+   scope. Otherwise, mint a key with `create_api_key`: `repo.read`, plus
+   `repo.write` only when the user will push. Write a new key straight to
+   `REPLO_API_KEY`; never print it, commit it, or put it in a URL. Keys minted
+   this way carry only repository scopes, so they cannot publish.
 3. Point Git at the key for `git.replo.app` only, then verify and clone:
 
    ```bash
@@ -44,10 +47,18 @@ with a change going live.
    git clone "$REPLO_GIT_URL"
    ```
 
-   In CI, pass `-c "http.extraHeader=Authorization: Bearer $REPLO_API_KEY"` to
-   each Git command instead, so no credential persists. Other options are in the
-   [Replo Git docs](https://docs.replo.app/git/get-started).
-4. Most sites run locally with `pnpm install`, then `pnpm dev`.
+   This helper also works in an isolated CI home. Do not interpolate the key
+   into `git -c http.extraHeader=...`; the credential would be visible in Git's
+   command-line arguments. Bearer and other options are in the [Replo Git
+   docs](https://docs.replo.app/git/manual-setup).
+4. Use versions pinned by the checkout. If it has no `packageManager`, `engines`,
+   `.nvmrc`, or `.node-version`, use Node.js 22 and pnpm 10. Most sites then run
+   locally with `pnpm install`, followed by `pnpm dev`.
+5. Load the requested route and confirm it renders. A rendered route does not by
+   itself prove that product data loaded successfully. When product data is
+   expected, verify it against active products and confirm the expected data
+   appears; an empty fixture or one with only inactive products leaves product
+   loading unproven.
 
 ## Work without publishing by accident
 
@@ -79,7 +90,11 @@ Replo has no review gate, so this is the review:
    the publish build typechecks (live copies, layouts, shared components, config)
    fail publishing even when the dev server renders. Drafts (`*.dev.tsx`) are
    excluded from the publish typecheck.
-4. Push only when the user asks you to push. Asking for an edit is not a request
+4. Check `git status --short`, stage only the intended paths, and inspect the
+   staged diff. The dev server can generate root `AGENTS.md` and `CLAUDE.md`
+   files; leave them untracked unless the user deliberately changed the site's
+   shared instructions.
+5. Push only when the user asks you to push. Asking for an edit is not a request
    to push, just as it is not a request to publish.
 
 Teams that want pull-request review keep reviewed history in their own Git host
