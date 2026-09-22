@@ -40,8 +40,7 @@ Inspected from package source + [ShopPayButton docs](https://shopify.dev/docs/ap
 
 ## Store domain
 
-1. Ask a Replo session for the store's `myshopifyDomain`, **or**
-2. Read `vars.SHOPIFY_URL` from `wrangler.jsonc` (publish writes it when Shopify is connected; do not edit that file).
+Ask a Replo session for the store's `myshopifyDomain`. The site has no `SHOPIFY_URL` in `wrangler.jsonc` or the worker env; do not look for one there.
 
 Bake the hostname into the client component. `getEnv()` from `@replohq/sdk` does **not** expose `SHOPIFY_URL` to typed app code.
 

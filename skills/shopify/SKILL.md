@@ -525,7 +525,7 @@ Storefront metaobjects have no `displayName` (that is Admin-only), and `fields` 
 
 Cart operations go through the **dependency-resolver** (server-to-server). The scaffold never calls Shopify directly for cart mutations. This means:
 
-- No Shopify credentials are needed in the scaffold for cart.
+- The site has **no Shopify Storefront token** — there is no `SHOPIFY_STOREFRONT_ACCESS_TOKEN` / `SHOPIFY_URL` in `wrangler.jsonc` or the worker env, and a route that calls `*.myshopify.com/api/*/graphql.json` directly will fail on the published site. Every cart mutation you need is on `useCart` below; if one is genuinely missing, use `report_bug` instead of calling Shopify yourself.
 - Cart hooks call server actions, which call the resolver, which calls Shopify.
 - Cart state is persisted via a cookie (`replo_cart_id`) containing only the Shopify cart GID.
 - Markets currency is not automatic. Pass the same country you use on product loaders to `ReploProvider` as `markets={{ shopify: { country } }}` so cart create and checkout use that market. See [shopify-markets.md](references/shopify-markets.md).
@@ -536,7 +536,10 @@ Import cart hooks from `@replohq/sdk/cart/hooks/`:
 
 - **`useAddToCart`** — adds items to the cart using merchandise IDs from loader output. Returns `{ addToCart, isAdding }`; `addToCart` never throws and resolves `{ adjustments, error }` — `adjustments` lists what the server changed about a saved add (a quantity clamped to stock, an unavailable line removed), `error` is set when the cart can't be created or saved.
 - **`useBuyNow`** — creates a cart and redirects directly to checkout (skips the cart UI).
-- **`useCart`** — read-only cart UI state: `itemsCount`, `isCartOpen`, `openCart`, `closeCart`, `updateDiscountCodes`, plus `error` / `clearError` for the last cart change that failed to save.
+- **`useCart`** — cart UI state and order-level writes: `itemsCount`, `isCartOpen`, `openCart`, `closeCart`, `updateDiscountCodes`, `updateNote`, `replaceAttributes`, plus `error` / `clearError` for the last cart change that failed to save.
+  - `updateNote(note)` sets the Shopify cart note (the order's "special instructions"); pass `""` to clear it. Each call is one Shopify mutation: save on blur or after the shopper stops typing, never on every `onChange`.
+  - `replaceAttributes(attributes)` replaces the cart-level attributes (`[{ key, value }]`), the fields gift-message and fulfillment-routing apps (Giftship-style "gift" / "Separate Gifts" flags) read off the order. The full list is replaced each call, so a key left out is removed; values are stored as strings. Per-line properties still go on `addToCart` items.
+  - Both are Shopify-checkout only. On a Replo Products (Stripe) checkout the SDK keeps the note and attributes on the cart but does not forward them to the order, so do not build gift-note UI on those hooks there.
 
 ### Add to Cart
 
