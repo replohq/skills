@@ -335,6 +335,27 @@ Public metafield-value read: owner GID = gid://shopify/Product/123,
 
 `value` is **always a string**, regardless of type. Parse it according to `type`.
 
+For `file_reference` metafields, `value` remains Shopify's resource GID — never
+pass it to an image or download URL. The resolved asset arrives on `reference`,
+a discriminated union you switch on:
+
+| `reference` | Shape | Render as |
+| --- | --- | --- |
+| image | `{ kind: "image", url }` | `<img src={url}>` |
+| file | `{ kind: "file", url }` | a download link |
+| video | `{ kind: "video", url, previewUrl }` | `<video src={url} poster={previewUrl}>` |
+
+`reference` is `null` when the metafield holds no reference (any non-file type)
+or points at a kind we do not resolve, such as `Model3d`. `url` is `null` when
+Shopify withholds the asset, so handle that without discarding the raw
+metafield. Only the video variant has `previewUrl`.
+
+```tsx
+if (metafield.reference?.kind === "image" && metafield.reference.url) {
+  return <img src={metafield.reference.url} alt="" />;
+}
+```
+
 ### Which tool to use
 
 | Need                                                      | Tool                                                                                                       |
@@ -360,7 +381,7 @@ If the user wants a `NONE` metafield on a page, tell them it must first be expos
 
 `ProductLoader` takes `productMetafieldIdentifiers` and `variantMetafieldIdentifiers`. Pass the **same identifiers, in the same order**, to both `PrefetchedLoaders` and the loader component — the prefetch cache is keyed on the args, so a mismatch silently refetches on the client without metafields.
 
-Product metafields arrive on `product.metafields`; variant metafields on `product.variants[N].metafields`. Both are `{ namespace, key, type, value }`, and `value` is always a string.
+Product metafields arrive on `product.metafields`; variant metafields on `product.variants[N].metafields`. Both are `{ namespace, key, type, value, reference? }`, and `value` is always a string. For `file_reference`, switch on `reference.kind` before rendering (see above) — handle a null `reference` or `url` without discarding the raw metafield.
 
 ```tsx
 // app/products/[handle]/page.tsx  (server component)
