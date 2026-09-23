@@ -1,10 +1,10 @@
-# Site Components
+# Component Library
 
-Read this when creating, editing, renaming, or deleting anything at the top level of the site's `components/` directory, when promoting existing page markup into a reusable component ("use my same header on this page", "make this a component"), when the user mentions a Site Component in chat, or when the Site Components preview needs an update.
+Read this when creating, editing, renaming, or deleting anything at the top level of the site's `components/` directory, when promoting existing page markup into a reusable component ("use my same header on this page", "make this a component"), when the user mentions a Site Component in chat, or when the Component Library preview needs an update.
 
 ## What the user sees
 
-Every top-level `.tsx` file directly in the selected site's `components/` directory is surfaced — by file name — as a Site Component in Site Builder's Site Components view. There the user previews the component in isolation, adjusts local props in the Preview panel, and can mention it in chat (the mention hands you the file's path). Subdirectories are not surfaced.
+Every top-level `.tsx` file directly in the selected site's `components/` directory appears by file name in Site Builder's Component Library. There the user previews the component in isolation, adjusts local props in the Preview panel, and can mention it in chat (the mention hands you the file's path). Subdirectories are not surfaced.
 
 That surfacing drives every rule here: the top level of `components/` is a user-facing product surface, not a code-organization tool. A stray helper file becomes a broken entry in the user's component library; a required prop with no default becomes a broken preview; an untyped prop bag becomes an empty props panel.
 
@@ -64,7 +64,7 @@ Placement for "on every page": import the component on each page. Move it into `
 
 A Site Component lives at `components/Name.tsx`. Before editing, grep the site for imports of it — the edit lands on every page that uses the component, and your summary must say which pages changed. If the user wants a change on one page only ("make the header transparent on the landing page"), don't fork the file and don't change the shared default: add a prop and set it at that one usage. A page-scoped change intentionally leaves the shared default — and therefore the bare workbench preview — looking unchanged, so tell the user which page shows the change rather than letting them hunt for it in the preview.
 
-Prop values in Site Components are local preview state, not site code. Edit with chat stages a draft with a component file mention card for the user to send. Adding props is chat-led. Use values explicitly supplied in the message; if absent, ask which settings the user wants. Preview controls do not change component defaults or page usages.
+Prop values in the Component Library are local preview state, not site code. Edit with chat stages a draft with a component file mention card for the user to send. Adding props is chat-led. Use values explicitly supplied in the message; if absent, ask which settings the user wants. Preview controls do not change component defaults or page usages.
 
 The breadcrumb rename popover and the Component name field (saved on blur) run a background session for a real file rename. Check for collisions, update imports/re-exports and usages (including Git-ignored `app/replo-preview/site-components/**/page.dev.jsx` preview imports), preserve the public props and rendering, and verify every affected page. Names in the selector and chat mentions follow the resulting filename. Local preview values are path-scoped and may need to be recreated after a rename; do not promise automatic migration.
 
