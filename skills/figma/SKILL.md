@@ -70,7 +70,16 @@ The operations you need, by job:
 - `figma_get_images` renders nodes to PNG/JPG/SVG and returns a URL per node.
   Use it to actually look at the design (PNG at `scale: 2`) rather than
   inferring appearance from the node tree, and later to export image and
-  vector nodes.
+  vector nodes. Keep each call to a few node ids: Figma renders them
+  serially, and a render call that outruns its budget fails as a whole, so a
+  big batch loses every node in it. Never use a frame render as a page
+  background: it carries the frame's text and overlays.
+- `figma_get_image_fills` returns a download URL for every original photo in
+  the file, keyed by the `imageRef` on a node's IMAGE fill. Use it for hero
+  backgrounds, product shots, and lifestyle photography; one call covers the
+  whole file. The URLs are temporary (about 14 days), so hand each one you
+  will use to `upload_asset` as soon as you have it, and never leave a Figma
+  URL in the page.
 - `figma_get_file_nodes` returns the node tree for specific ids: auto-layout
   properties, text with its `style` object, fills, strokes, effects, corner
   radii, and component instances. Prefer it over `figma_get_file`, batch every
@@ -94,8 +103,11 @@ user asks for one.
 
 Before writing anything substantive to the route:
 
-1. **Render the exact target node** with `figma_get_images` at `scale: 2` and
-   save the image locally so you can re-view it per section.
+1. **Render the target frame section by section**: fetch it with
+   `figma_get_file_nodes` at `depth: 1`, then render its top-level children
+   with `figma_get_images` at `scale: 2`, a few per call, and save each
+   image locally so you can re-view it. A whole page frame is the slowest
+   render Figma can do; the file's `thumbnailUrl` already gives the overview.
 2. **Fetch the exact target node** with `figma_get_file_nodes`.
 3. **Find the corresponding viewport.** When coverage is desktop and mobile,
    inspect the target's siblings (a shallow fetch of the parent) for an
@@ -168,18 +180,21 @@ skeleton; the route renders after every edit).
    the user exactly which family, style, and weight is missing, ask for the
    file, and leave that text unfinished rather than shipping a lookalike.
 
-6. **Persist every image as a Replo asset.** `figma_get_images` returns
-   **temporary signed URLs** that stop resolving after about 30 days; a page
-   referencing one looks correct today and serves broken images later. For
-   each image or vector node, render it (PNG at `scale: 2` for raster, `svg`
-   for icons and vectors) and, while the URL is still live, hand it to
-   `upload_asset` as its `url` with a descriptive `name` and `altText`. It
-   fetches the bytes and returns a permanently hosted asset — reference that
-   hosted URL in `next/image`, never the Figma one. Run `find_assets` first
-   for assets the project already holds (the logo, product photography) and
-   reuse those. If a node cannot be exported individually, export and upload
-   its parent; if that also fails, report the blocker instead of inventing a
-   substitute.
+6. **Persist every image as a Replo asset.** Photos come from
+   `figma_get_image_fills`: read the `imageRef` off each node's IMAGE fill in
+   the node tree, call it once for the file, and take the original photo's
+   URL from the map. Only icons and vector nodes are rendered, with
+   `figma_get_images` as `svg`; never use a frame render as a page
+   background, since it carries the frame's text and overlays. Both kinds of
+   URL are **temporary** (fills for about 14 days, renders for about 30), so
+   while one is still live hand it to `upload_asset` as its `url` with a
+   descriptive `name` and `altText`. It fetches the bytes and returns a
+   permanently hosted asset — reference that hosted URL in `next/image`,
+   never the Figma one. Run `find_assets` first for assets the project
+   already holds (the logo, product photography) and reuse those. If a photo
+   has no fill entry and a node cannot be exported individually, export and
+   upload its parent; if that also fails, report the blocker instead of
+   inventing a substitute.
 
 7. **Real text from the node tree**, never OCR from the render. Copy is
    binding in `faithful` mode; fix only obvious gibberish, and keep the voice.
