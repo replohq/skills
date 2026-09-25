@@ -23,9 +23,9 @@ A Replo site is a Next.js repo you can clone and edit directly:
 
 ## Getting the brand
 
-The project's brand kit lives in Brand Studio, outside the site repo. There is no brand tool on the public MCP surface, and none is needed — a Replo session reads and writes Brand Studio for you.
+The project's brand kit lives in Branding, outside the site repo. There is no brand tool on the public MCP surface, and none is needed — a Replo session reads and writes Branding for you.
 
-- **From a Replo session (do this first).** Prompt `start_agent_session` with: "Report the project's primary brand: every color token with its hex, the font families and faces, and the logo URL. Do not change anything." The session reads Brand Studio and returns the values. Do not ask the user to retype colors Replo already holds. If the project has no brand yet, ask the session to create one first (see the Brand kits skill).
+- **From a Replo session (do this first).** Prompt `start_agent_session` with: "Report the project's primary brand: every color token with its hex, the font families and faces, and the logo URL. Do not change anything." The session reads Branding and returns the values. Do not ask the user to retype colors Replo already holds. If the project has no brand yet, ask the session to create one first (see the Brand kits skill).
 - **From the user** — only when they are deliberately applying a brand the project does not have, or overriding specific values.
 
 For the logo, use a URL that actually resolves; if there is no usable logo, leave the current logo untouched and say so.

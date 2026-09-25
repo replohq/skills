@@ -22,7 +22,7 @@ A site is a deployable storefront or web app; a project can hold several, and on
 - Tools: list_sites, update_site (dashboard display name only), publish_site.
 - Prompt-only: creating, editing, restyling, or removing pages and sections; SEO titles and metadata; navigation; forms; anything inside a page. Describe pages by route and purpose.
 
-### Brand Studio
+### Branding
 Where the brand lives: colors, fonts, logos, imagery, and a business profile (what the store sells and for whom). Set up once, used everywhere — sites, emails, product copy. The agent can generate it from an existing website URL, walk the user through it, or build it by hand. Applying the brand to a site is a design-token change on that site, not a rebuild.
 - Tools: none.
 - Prompt-only: create or update the brand kit or business profile, apply a brand to a site, restyle a site to match a brand, and report the brand's colors, fonts, and logo URLs back to you. Include only the brand information needed for the requested task.
@@ -71,7 +71,7 @@ Skills are reusable playbooks (instructions plus reference files) the agent load
 - Prompt-only: install, create, or edit a skill; ask for a plan before building; approve or revise a plan.
 
 ### CMS, Settings, and memory
-CMS holds structured content (blog posts, collections of records) that pages render. Settings covers project configuration such as team, billing, and site-level options. Memory is what the agent remembers: user memory is private and follows the user across projects; project memory is shared by everyone on the project. Brand identity is not memory — it lives in Brand Studio.
+CMS holds structured content (blog posts, collections of records) that pages render. Settings covers project configuration such as team, billing, and site-level options. Memory is what the agent remembers: user memory is private and follows the user across projects; project memory is shared by everyone on the project. Brand identity is not memory — it lives in Branding.
 - Tools: none.
 - Prompt-only: all of it. Specify the authorized change and necessary data; permission requests are returned through pendingInteractions.
 

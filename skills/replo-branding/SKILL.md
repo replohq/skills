@@ -8,11 +8,11 @@ tools: start_agent_session
 
 # Brand Kits via Replo Sessions
 
-A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Brand Studio**. There is no dedicated brand tool on the public MCP surface, and none is needed: every brand operation works today by describing it in a session (`start_agent_session` / `send_agent_message`). Never tell a user that brand kits need "write access" or are unsupported through the connector — they are fully operable.
+A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Branding**. There is no dedicated brand tool on the public MCP surface, and none is needed: every brand operation works today by describing it in a session (`start_agent_session` / `send_agent_message`). Never tell a user that brand kits need "write access" or are unsupported through the connector — they are fully operable.
 
 ## Create a brand kit from a website URL
 
-This is the most complete path. The Replo agent scrapes the site, extracts the palette, fonts, logo, and imagery, writes the business profile, and saves the result in Brand Studio.
+This is the most complete path. The Replo agent scrapes the site, extracts the palette, fonts, logo, and imagery, writes the business profile, and saves the result in Branding.
 
 Prompt shape:
 
@@ -24,7 +24,7 @@ Notes:
 
 - Name the project (the session is already project-scoped, so the URL is the only required input).
 - The project's **first** brand becomes the primary brand automatically — no extra step before it can be applied to a site.
-- Extraction takes a minute or two: poll `get_agent_session` while status is `starting`/`running`, and give the user the `dashboardUrl` so they can watch the brand stream into Brand Studio.
+- Extraction takes a minute or two: poll `get_agent_session` while status is `starting`/`running`, and give the user the `dashboardUrl` so they can watch the brand stream into Branding.
 
 ## Create or update a brand without a URL
 
