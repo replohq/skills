@@ -22,7 +22,7 @@ Keep the `customDomainId` returned by `connect_custom_domain` — the other two 
 
 ## Full Domain Setup Flow
 
-1. Ask the user which domain they want to connect (e.g. `shop.example.com` or `example.com`).
+1. Ask the user which domain they want to connect (e.g. `shop.example.com` or `example.com`). If they sell through Shopify, apply **Shopify Stores** below first.
 2. Call `list_sites` to determine which site to attach the domain to:
    - If the project has one site, use that site's `id`.
    - If the project has multiple sites, ask the user which site the domain should point to.
@@ -32,6 +32,13 @@ Keep the `customDomainId` returned by `connect_custom_domain` — the other two 
 6. Tell the user to configure DNS at their registrar.
 7. Once the user confirms DNS is configured, call `verify_custom_domain` with the `customDomainId`.
 8. If verification succeeds, confirm the domain is active. If DNS has not propagated, the tool returns the domain's current status rather than failing — tell the user to wait and try again.
+
+## Shopify Stores
+
+Shopify runs checkout on the store's primary domain (Shopify admin → Settings → Domains), so it must keep pointing at Shopify. Apply this before connecting a domain or re-showing a pending domain's records.
+
+- If the hostname serves their Shopify store, by default offer an unused subdomain (`shop.`, `lp.`). A pasted store URL or "connect my domain" is not a request to replace the store.
+- Never connect Shopify's primary domain or suggest making a Replo domain the primary, even to brand checkout. To use that host or brand checkout, they first make a new subdomain like `checkout.example.com` the primary in Shopify (CNAME to `shops.myshopify.com`).
 
 ## DNS Instructions
 
