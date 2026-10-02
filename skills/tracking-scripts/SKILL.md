@@ -40,6 +40,11 @@ The `ReploScriptEntry` type is imported from `@replohq/sdk/consent/types`. Do
 `<ReploScripts>` (from `@replohq/sdk/consent/replo-scripts`) handles gating and injection. You
 do **not** write `<script>` tags for managed scripts — you only edit the array.
 
+Keep `<ReploScripts>` and its array directly in `app/layout.tsx`; never wrap or
+move them. Site Settings can't read a moved registry, and its next save there
+erases every entry. Per-page scripts aren't supported: say so and offer a
+site-wide entry.
+
 ## Adding a known provider
 
 Add one entry with the provider's PascalCase `type` and its ID/key as
