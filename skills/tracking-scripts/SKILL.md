@@ -42,8 +42,9 @@ do **not** write `<script>` tags for managed scripts — you only edit the array
 
 Keep `<ReploScripts>` and its array directly in `app/layout.tsx`; never wrap or
 move them. Site Settings can't read a moved registry, and its next save there
-erases every entry. Per-page scripts aren't supported: say so and offer a
-site-wide entry.
+erases every entry. Registry entries load on every page and can't be limited
+to some pages; if asked, say so and offer a site-wide entry. Page-specific
+widgets (quizzes, pop-ups) go in that page's code, not the registry.
 
 ## Adding a known provider
 
