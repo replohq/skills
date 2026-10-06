@@ -563,6 +563,8 @@ function ProductCard({ productId }: { productId: string }) {
     >
       {(product) => {
         const firstVariant = product.variants[0];
+        // Pre-order and subscription-only products need a plan on every line.
+        const sellingPlanId = product.requiresSellingPlan ? (firstVariant?.sellingPlanIds[0] ?? null) : null;
         return (
           <div>
             <h2>{product.title}</h2>
@@ -570,7 +572,7 @@ function ProductCard({ productId }: { productId: string }) {
               disabled={!firstVariant?.availableForSale || isAdding}
               onClick={() => {
                 if (firstVariant) {
-                  void addToCart([{ merchandiseId: firstVariant.id, quantity: 1 }]);
+                  void addToCart([{ merchandiseId: firstVariant.id, quantity: 1, sellingPlanId }]);
                 }
               }}
             >
@@ -586,18 +588,20 @@ function ProductCard({ productId }: { productId: string }) {
 
 **Failures are handled by the SDK, not the button.** When the cart can't be created or saved, `addToCart` resolves with `error` set, the provider stores the same shopper-ready message on `useCart().error`, and the slide-out cart opens (or stays open) so the shopper sees it. The slide-out cart must render `useCart().error` — see Cart UI below. Do not wrap `addToCart` in `try/catch` or render a per-button error; read the result only when the caller needs `adjustments` or wants to branch on `error`.
 
-### Subscriptions (selling plans)
+### Subscriptions and pre-orders (selling plans)
 
-Supported natively when the checkout provider is `shopify` (on `replo` the plan is dropped at checkout, so switch the provider first). Subscription apps (Skio, Recharge, Loop, …) create Shopify selling plans, which the loaders and cart carry through to Shopify Checkout. Never tell the user subscriptions can't be sold from a Replo page, and never route subscribe traffic to the Shopify PDP.
+Supported natively when the checkout provider is `shopify` (on `replo` the plan is dropped at checkout, so switch the provider first). Subscription apps (Skio, Recharge, Loop, …) and pre-order apps (Timesact, PreProduct, …) create Shopify selling plans, which the loaders and cart carry through to Shopify Checkout. Never tell the user subscriptions or pre-orders can't be sold from a Replo page, and never route subscribe or pre-order traffic to the Shopify PDP.
 
 - `product.sellingPlanGroups[].sellingPlans[]` lists the plans; `variant.sellingPlanIds` lists which of them the variant is eligible for.
-- Pass `sellingPlanId` on the line to `addToCart` / `buyNow`; omit it for one-time purchase. The saved line carries `sellingPlanAllocation` with the adjusted price.
+- `product.requiresSellingPlan` is `true` when Shopify sells the product only with a plan (pre-orders, subscription-only products). Shopify rejects any line for it without a `sellingPlanId`, so there is no one-time purchase: select the first eligible plan by default and send a plan with every add.
+- Pass `sellingPlanId` on the line to `addToCart` / `buyNow`; when a plan is optional, pass `null` for one-time purchase. The saved line carries `sellingPlanAllocation` with the adjusted price.
 
 ```tsx
 const plans = product.sellingPlanGroups.flatMap((group) =>
   group.sellingPlans.filter((plan) => variant.sellingPlanIds.includes(plan.id)),
 );
-void addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId: selectedPlanId }]);
+const sellingPlanId = product.requiresSellingPlan ? (selectedPlanId ?? plans[0]?.id ?? null) : selectedPlanId;
+void addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId }]);
 ```
 
 Selector UX rules live in the `product-display` skill.
@@ -633,20 +637,20 @@ When wiring an Add to Cart button inside a `CollectionProductsLoader` grid, see 
 
 ### Buy Now
 
-Use `useBuyNow` for express checkout. Pass variant IDs the same way.
+Use `useBuyNow` for express checkout. Pass variant IDs the same way, plus the selected `sellingPlanId`, which a product with `requiresSellingPlan` always needs (`null` for a one-time purchase).
 
 ```tsx
 "use client";
 
 import { useBuyNow } from "@replohq/sdk/cart/hooks/use-buy-now";
 
-function BuyNowButton({ variantId }: { variantId: string }) {
+function BuyNowButton({ variantId, sellingPlanId }: { variantId: string; sellingPlanId: string | null }) {
   const { buyNow } = useBuyNow();
 
   return (
     <button
       onClick={() => {
-        buyNow([{ variantId, quantity: 1 }]);
+        buyNow([{ variantId, quantity: 1, sellingPlanId }]);
       }}
     >
       Buy Now

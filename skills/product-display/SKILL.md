@@ -57,21 +57,27 @@ When building **upsell products, recommended products, or collection items** (i.
 - Cart-level pricing utilities (e.g., `getCartLinePricing` from `@replohq/sdk/cart/utils/variant-to-cart-line`) also support compare-at pricing for cart line items
 - Only show per-unit breakdowns when there is an explicit unit basis (servings, capsules, packs, cases). If unknown, do **NOT** display per-unit pricing
 
-## Selling Plans (Subscriptions)
+## Selling Plans (Subscriptions and Pre-orders)
 
-Selling plan data is available directly on the product from `ProductLoader`:
+Subscription apps (Skio, Recharge, Loop, …) and pre-order apps (Timesact, PreProduct, …) create Shopify selling plans. Selling plan data is available directly on the product from `ProductLoader`:
 
 - **`product.sellingPlanGroups`** — array of `SellingPlanGroup`, each containing `appId`, `options`, and `sellingPlans` (with `id`, `name`, `description`, `optionValues`, and `priceAdjustments`)
 - **`variant.sellingPlanIds`** — array of selling plan GIDs that this specific variant is eligible for. Use this to filter `product.sellingPlanGroups` so the UI only shows plans available for the selected variant
+- **`product.requiresSellingPlan`** — `true` when Shopify sells the product only with a selling plan, as with pre-orders and subscription-only products. Shopify rejects any cart line for such a product without a `sellingPlanId`
 
-**To build a subscription product UI:**
+**To build a subscription or pre-order product UI:**
 
 1. Render a plan selector using `product.sellingPlanGroups` — filter each group's `sellingPlans` to those whose `id` appears in the selected `variant.sellingPlanIds`
-2. Pass `sellingPlanId` when calling `addToCart` or `buyNow`:
+2. When `product.requiresSellingPlan` is `true` there is no one-time purchase: select the first eligible plan by default and send a plan with every add. Otherwise offer one-time purchase too, and send `sellingPlanId: null` for it
+3. Pass `sellingPlanId` when calling `addToCart` or `buyNow`:
    ```tsx
-   addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId: selectedPlanId }]);
+   const plans = product.sellingPlanGroups.flatMap((group) =>
+     group.sellingPlans.filter((plan) => variant.sellingPlanIds.includes(plan.id)),
+   );
+   const sellingPlanId = product.requiresSellingPlan ? (selectedPlanId ?? plans[0]?.id ?? null) : selectedPlanId;
+   addToCart([{ merchandiseId: variant.id, quantity: 1, sellingPlanId }]);
    ```
-3. Products with no selling plans will have `sellingPlanGroups: []` and `variant.sellingPlanIds: []`
+4. Products with no selling plans will have `sellingPlanGroups: []`, `variant.sellingPlanIds: []`, and `requiresSellingPlan: false`
 
 **Cart-level selling plan utilities:**
 
