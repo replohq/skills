@@ -105,3 +105,6 @@ list_sites returns clone URLs for the selected project. For user-requested local
 
 ## Saved instructions
 When the user asks to save a reusable workflow or preference in Replo, describe its name, purpose, and scope in an agent session. Save only the instructions they requested; one-off tasks and unrelated conversation content do not belong in persistent memory.
+
+## Product feedback
+Use report_bug for credible Replo defects and submit_feature_request for capabilities the user requested and you verified are missing. Pass the projectId from list_projects. Include concrete evidence, distinguish observed facts from unknowns, and omit credentials and unrelated customer data.
