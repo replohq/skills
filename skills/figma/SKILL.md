@@ -74,10 +74,11 @@ The operations you need, by job:
   serially, and a render call that outruns its budget fails as a whole, so a
   big batch loses every node in it. Never use a frame render as a page
   background: it carries the frame's text and overlays.
-- `figma_get_image_fills` returns a download URL for every original photo in
-  the file, keyed by the `imageRef` on a node's IMAGE fill. Use it for hero
-  backgrounds, product shots, and lifestyle photography; one call covers the
-  whole file. The URLs are temporary (about 14 days), so hand each one you
+- `figma_get_image_fills` returns a download URL for each original photo you
+  ask for, keyed by the `imageRef` on a node's IMAGE fill. Use it for hero
+  backgrounds, product shots, and lifestyle photography; pass the refs you need
+  as `image_refs`, and one call can take all of them. Refs listed in
+  `missing_image_refs` are not in the file. The URLs are temporary (about 14 days), so hand each one you
   will use to `upload_asset` as soon as you have it, and never leave a Figma
   URL in the page.
 - `figma_get_file_nodes` returns the node tree for specific ids: auto-layout
@@ -182,7 +183,7 @@ skeleton; the route renders after every edit).
 
 6. **Persist every image as a Replo asset.** Photos come from
    `figma_get_image_fills`: read the `imageRef` off each node's IMAGE fill in
-   the node tree, call it once for the file, and take the original photo's
+   the node tree, pass those refs as `image_refs`, and take the original photo's
    URL from the map. Only icons and vector nodes are rendered, with
    `figma_get_images` as `svg`; never use a frame render as a page
    background, since it carries the frame's text and overlays. Both kinds of
