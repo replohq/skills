@@ -2,7 +2,7 @@
 name: tracking-scripts
 title: Tracking Scripts & Consent
 summary: Add analytics and marketing pixels so they respect cookie consent.
-description: Use when the user asks to add, install, remove, or change an analytics or marketing tracking script, pixel, or tag — GA4 / Google Analytics, Google Tag Manager (GTM), Meta / Facebook pixel, TikTok, Pinterest, Reddit, Snapchat, Hotjar, Microsoft Clarity, Contentsquare, Triple Whale, Elevar, Segment, Northbeam, Converge, Cookiebot — or pastes a raw `<script>` tag and says "put this on my page", or mentions cookie consent, Cookiebot, a consent management platform (CMP), GDPR/CCPA compliance, customizing/restyling/replacing the cookie consent banner, or making a script respect consent at runtime (window.Replo.customerPrivacy / visitorConsentCollected).
+description: Use when the user asks to add, install, remove, or change an analytics or marketing tracking script, pixel, or tag — GA4 / Google Analytics, Google Tag Manager (GTM), Meta / Facebook pixel, TikTok, Pinterest, Reddit, Snapchat, X / Twitter, Hotjar, Microsoft Clarity, Contentsquare, Triple Whale, Elevar, Segment, Northbeam, Converge, Cookiebot — or pastes a raw `<script>` tag and says "put this on my page", or mentions cookie consent, Cookiebot, a consent management platform (CMP), GDPR/CCPA compliance, customizing/restyling/replacing the cookie consent banner, or making a script respect consent at runtime (window.Replo.customerPrivacy / visitorConsentCollected).
 ---
 
 # Tracking Scripts & Cookie Consent
@@ -53,7 +53,7 @@ Add one entry with the provider's PascalCase `type` and its ID/key as
 `identifier`. Valid `type` values:
 
 `GA4`, `GoogleTagManager`, `Meta`, `TikTok`, `Pinterest`, `Reddit`, `Snapchat`,
-`Hotjar`, `MicrosoftClarity`, `Contentsquare`, `Segment`, `Northbeam`,
+`X`, `Hotjar`, `MicrosoftClarity`, `Contentsquare`, `Segment`, `Northbeam`,
 `Converge`, `Cookiebot` (a consent platform, not a tracker — see "Cookiebot"
 below).
 
@@ -63,6 +63,28 @@ Source (Converge → Data management → Event sources), which loads
 initial pageview; e-commerce funnel events and pageviews on SPA soft
 navigations are fired by the Replo runtime's analytics sinks, so no extra
 tracking code is needed.
+
+For X the `identifier` is the pixel ID, the value in `twq('config', '…')`
+(X Ads → Tools → Events Manager). The pixel ID alone records site visits and
+landing page views. Conversions need event IDs the merchant creates in X Ads
+Events Manager (`tw-<pixel ID>-<event>`), mapped in an optional `events` object
+whose keys are all optional: `pageView`, `productViewed`, `addToCart`,
+`startCheckout`, `purchase`. Never invent an event ID; each must start with
+`tw-<the same pixel ID>-`. X has no checkout or product-view event type, so
+those use Custom events. The runtime sends only mapped events, so add no `twq`
+code. If the layout already loads `static.ads-twitter.com/uwt.js` in a raw tag
+or `custom` entry, reuse its pixel ID and remove it, or site visits count twice.
+Before writing an X entry, read `consent/script-snippets.js` inside the installed site
+`@replohq/sdk` package under `node_modules` and confirm it contains
+`static.ads-twitter.com/uwt.js`. Otherwise, update to a published SDK with X
+support and verify again. If no compatible release is available, stop before
+editing the layout and explain that X support must be released first.
+Mapped `pageView` fires on the landing page and on in-site page changes after
+consent allows tracking. Catalog matching for Dynamic Product Ads is not supported.
+
+```tsx
+{ type: "X", identifier: "o6ou1", events: { addToCart: "tw-o6ou1-ghi56" } }
+```
 
 For Contentsquare the `identifier` is the 13-character UXA tag ID (e.g.
 `21d351bec970b`), which loads `https://t.contentsquare.net/uxa/{id}.js`.
@@ -81,7 +103,7 @@ consent category. Only set `requiredConsent` if the user explicitly wants to
 recategorize it.
 
 **Check for a tag manager first.** Before adding `Meta`, `GA4`, `TikTok`,
-`Pinterest`, `Snapchat`, or `Reddit`, look in the `scripts` array for a
+`Pinterest`, `Snapchat`, `Reddit`, or `X`, look in the `scripts` array for a
 `GoogleTagManager` entry, a `Segment` entry, or a `snippet` entry with
 `id: "Elevar"`. Those tools commonly fire these pixels themselves (a GTM
 container loads whatever tags it holds; Elevar and Segment forward events to
@@ -334,7 +356,7 @@ already gates them at injection. Full surface is documented in
 - Don't forget to bump the banner's `useConsent({ version })` policy version
   when you change the banner copy or category set (see
   "Customizing the consent banner").
-- Don't add a Meta, GA4, TikTok, Pinterest, Snapchat, or Reddit pixel next to a
+- Don't add a Meta, GA4, TikTok, Pinterest, Snapchat, Reddit, or X pixel next to a
   `GoogleTagManager`, `Segment`, or Elevar entry without asking whether that
   tool already fires it, and without telling the user it may double-fire (see
   "Check for a tag manager first").
