@@ -6,7 +6,7 @@ description: |
   Guide for using the `query_replo_analytics` MCP tool to run ClickHouse SQL queries against Replo analytics data.
   Reference when: the agent needs to query analytics data, understand page views, sessions, purchases, conversion rates, or build custom analytics queries.
   Also load for pixel-related queries, e.g. when querying for specific meta ads/adsets, etc
-tools: query_replo_analytics
+tools: query_replo_analytics, edit_replo_project, create_task
 ---
 
 # MCP Analytics Query Tool

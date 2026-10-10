@@ -2,13 +2,13 @@
 name: replo-branding
 title: Create a Brand Kit
 summary: Extract a brand from a website or Figma file, then keep it updated.
-description: "Use when creating or updating a Replo brand kit — extracting a brand from a website URL, handling a Figma URL as the brand source, and applying the brand — all by prompting a Replo session."
-tools: start_agent_session
+description: "Use when creating or updating a Replo brand kit — extracting a brand from a website URL, handling a Figma URL as the brand source, and applying the brand — through Replo’s brand and page tools."
+tools: get_brand_kit, edit_replo_project, continue_replo_project_edits, get_agent_session
 ---
 
 # Brand Kits via Replo Sessions
 
-A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Branding**. There is no dedicated brand tool on the public MCP surface, and none is needed: every brand operation works today by describing it in a session (`start_agent_session` / `send_agent_message`). Never tell a user that brand kits need "write access" or are unsupported through the connector — they are fully operable.
+A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Branding**. Use `edit_replo_project` for requested brand changes and `continue_replo_project_edits` for follow-ups in that session. Supply the projectId and only the necessary brand instructions and references. Use `get_brand_kit` for reads. Applying the saved brand to a site is a separate requested change through `edit_replo_project`.
 
 ## Create a brand kit from a website URL
 
@@ -22,7 +22,7 @@ Create a brand kit for this project from https://example.com
 
 Notes:
 
-- Name the project (the session is already project-scoped, so the URL is the only required input).
+- Pass the selected projectId and the website URL in instructions to `edit_replo_project`.
 - The project's **first** brand becomes the primary brand automatically — no extra step before it can be applied to a site.
 - Extraction takes a minute or two: poll `get_agent_session` while status is `starting`/`running`, and give the user the `dashboardUrl` so they can watch the brand stream into Branding.
 
@@ -38,7 +38,7 @@ Walk me through setting up my brand — I don't have a website yet.
 Change the brand's primary color to teal and swap the heading font to Playfair Display.
 ```
 
-Brand edits preserve everything not mentioned — the agent mutates only the named tokens.
+Request only the named changes and verify that the result preserves other brand values.
 
 ## Figma URL as the brand source
 
@@ -56,13 +56,9 @@ The brand should come from this Figma file: <figma-url>. Check whether the Figma
 
 Applying the brand to a site is a design-token change on that site, not a rebuild:
 
-- **Via session** (default): `Apply the project's brand to the <site> site.` The agent rewrites the site's design tokens, font, and logo, and runs its own contrast and coverage checks.
+- **Via `edit_replo_project`** (default): `Apply the project's brand to the <site> site.` The agent rewrites the site's design tokens, font, and logo, and runs its own contrast and coverage checks.
 - **Via local edit**: if you are already working in a clone of the site repo, follow the **apply-branding** skill instead.
 
 ## Reading the brand
 
-To use brand values yourself (for ads, emails, or local site edits), ask a session to report them:
-
-```text
-Report the project's primary brand: every color token with its hex, the font families and faces, and the logo URL. Do not change anything.
-```
+To use brand values yourself (for ads, emails, or local site edits), call `get_brand_kit` with the projectId. It reads the saved brand without starting an agent session or making changes.

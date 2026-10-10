@@ -2,11 +2,29 @@
 name: figma
 title: Figma Designs
 summary: Read a Figma file through the Replo connection and rebuild the design as a page with exact fonts, layout, colors, and assets.
-tools: get_integration_status, upload_asset, find_assets, start_agent_session
+tools: get_integration_status, upload_asset, find_assets, edit_replo_project, get_agent_session, continue_replo_project_edits
 description: "REQUIRED when the user wants to build, rebuild, recreate, replicate, or match a Figma design, frame, or page, or to correct the fonts, layout, spacing, or imagery of a page built from one. Triggers: a figma.com link, \"from Figma\", \"this Figma file\", \"match the Figma\". Also covers reading Figma files, nodes, components, and styles through the project's Figma connection."
 ---
 
 # Building a Replo page from a Figma design
+
+## Delegate replication to the Replo agent
+
+For a replication request through the public connector, call `edit_replo_project`
+to start the internal Replo agent. Pass the selected `projectId` and include the
+original Figma URL, target frame/node, destination site and route, and the user's
+requested fidelity and viewport coverage in `instructions`. The internal agent
+retrieves the design and implements the page; do not send the user to Figma to
+recreate it manually.
+
+Poll `get_agent_session` with the returned `sessionId` for progress, results,
+and pending interactions. Send requested corrections through
+`continue_replo_project_edits` with that same `sessionId`. Follow the public session
+guidance for questions and permissions; replication does not authorize publishing.
+
+Use the requirements below to specify and assess the delegated work. Perform the
+local implementation steps yourself only when the user requests work in a local
+site clone.
 
 Rebuild the design in React + Tailwind using BOTH the rendered image (visual
 truth) and the structured node data (layout + design system) — never eyeball
@@ -96,9 +114,9 @@ exhaust that budget for little benefit. If a call comes back rate-limited and
 the message says the seat's limit is monthly, do not retry: tell the user
 their Figma seat limits API access and work from what you already fetched.
 
-Writing to Figma — posting a file comment — is not on the public surface. Only
-reads are exposed, so say so and offer a `start_agent_session` prompt if the
-user asks for one.
+The public Figma integration tools expose reads. Replicating a design in Replo
+is a page-edit request handled by `edit_replo_project`; posting a comment to the
+source Figma file is a separate operation.
 
 ## Lock the source before the first page write
 

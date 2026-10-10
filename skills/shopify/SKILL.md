@@ -26,10 +26,10 @@ integrations tools:
   `get_integration_status` with `integrationKey: "shopify"`, give the user the
   `connectUrl` it returns, and poll until it reports connected.
 
-Use the discovered public read operation for each lookup described below, following its current input schema and passing `reploProjectId`. If an operation remains unavailable after checking connection status, use a Replo session as a fallback. Object-type metadata can also be requested through a session when no public discovery operation exposes it.
+Use the discovered public read operation for each lookup described below, following its current input schema and passing `reploProjectId`. If an operation remains unavailable after checking connection status, explain that limitation and ask for the required source data.
 
-Writes to the store are not on the public surface. For those, prompt
-`start_agent_session` with what you need.
+Writes to the store are not on the public surface. Direct the user to the
+corresponding supported action in Replo.
 
 For Replo-managed products (a separate catalog from Shopify), use the
 `find_products` and `get_product` tools directly.
