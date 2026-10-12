@@ -2,7 +2,7 @@
 name: figma
 title: Figma Designs
 summary: Read a Figma file through the Replo connection and rebuild the design as a page with exact fonts, layout, colors, and assets.
-tools: get_integration_status, upload_asset, find_assets, edit_replo_project, get_agent_session, continue_replo_project_edits
+tools: get_integration_status, upload_asset, find_assets, create_site_page, edit_site_page, get_agent_session
 description: "REQUIRED when the user wants to build, rebuild, recreate, replicate, or match a Figma design, frame, or page, or to correct the fonts, layout, spacing, or imagery of a page built from one. Triggers: a figma.com link, \"from Figma\", \"this Figma file\", \"match the Figma\". Also covers reading Figma files, nodes, components, and styles through the project's Figma connection."
 ---
 
@@ -10,16 +10,16 @@ description: "REQUIRED when the user wants to build, rebuild, recreate, replicat
 
 ## Delegate replication to the Replo agent
 
-For a replication request through the public connector, call `edit_replo_project`
-to start the internal Replo agent. Pass the selected `projectId` and include the
-original Figma URL, target frame/node, destination site and route, and the user's
-requested fidelity and viewport coverage in `instructions`. The internal agent
-retrieves the design and implements the page; do not send the user to Figma to
-recreate it manually.
+For a replication request through the public connector, call `create_site_page` or
+`edit_site_page` with the selected `siteId` and `route`. Include the original Figma
+URL, target frame/node, requested fidelity, and viewport coverage in `instructions`.
+The Replo agent follows its Figma skill, retrieves the design through Replo's
+Figma integration, and implements and verifies the page. Do not send the user
+to a separate Figma MCP server or ask them to recreate the design manually.
 
 Poll `get_agent_session` with the returned `sessionId` for progress, results,
 and pending interactions. Send requested corrections through
-`continue_replo_project_edits` with that same `sessionId`. Follow the public session
+the same dedicated tool with the returned `sessionId`. Follow the public session
 guidance for questions and permissions; replication does not authorize publishing.
 
 Use the requirements below to specify and assess the delegated work. Perform the
@@ -115,7 +115,7 @@ the message says the seat's limit is monthly, do not retry: tell the user
 their Figma seat limits API access and work from what you already fetched.
 
 The public Figma integration tools expose reads. Replicating a design in Replo
-is a page-edit request handled by `edit_replo_project`; posting a comment to the
+is a page-edit request handled by `edit_site_page`; posting a comment to the
 source Figma file is a separate operation.
 
 ## Lock the source before the first page write

@@ -3,7 +3,7 @@ name: apply-branding
 title: Apply a Brand to a Site
 summary: Restyle a site's colors, fonts, and logo from its design tokens.
 description: "Use when applying a brand to a Replo site, page, or section, including requested colors, fonts, or logo. Preserve the requested surface and attributes."
-tools: get_brand_kit, edit_replo_project, list_projects, list_sites, create_api_key, publish_site
+tools: get_brand_kit, create_or_update_brand_kit, apply_brand_kit_to_site, list_projects, list_sites, create_api_key, publish_site
 ---
 
 # Applying a Brand to a Replo Site
@@ -25,7 +25,7 @@ A Replo site is a Next.js repo you can clone and edit directly:
 
 The project's brand kit lives in Branding, outside the site repo.
 
-- **From Replo (do this first).** Call `get_brand_kit` with the selected projectId to read its saved brand. Do not ask the user to retype colors Replo already holds. If there is no brand, use `edit_replo_project` when the user requests its creation (see the Brand kits skill).
+- **From Replo (do this first).** Call `get_brand_kit` with the selected projectId to read its saved brand. Do not ask the user to retype colors Replo already holds. If there is no brand, use `create_or_update_brand_kit` when the user requests its creation (see the Brand kits skill). For connector-based site styling, use `apply_brand_kit_to_site`; the filesystem steps below apply to user-requested local development.
 - **From the user** — only when they are deliberately applying a brand the project does not have, or overriding specific values.
 
 For the logo, use a URL that actually resolves; if there is no usable logo, leave the current logo untouched and say so.

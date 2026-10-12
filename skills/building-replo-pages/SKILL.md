@@ -3,7 +3,7 @@ name: building-replo-pages
 title: Build Pages
 summary: Create and edit pages backed by real store data, not hardcoded values.
 description: "Use when creating, editing, extending, or restyling any page or section of a Replo site — landing pages, product and collection pages, layouts, styling, images, translations, or routing. Replo sites are Next.js App Router repos you clone and edit. Triggers: make me a page, create a landing page, build a product page, update the about page, add a section, restyle this, make this a component, translate my site. To deploy, use the publish skill."
-tools: list_projects, list_sites, create_api_key, publish_site, find_assets, edit_replo_project, continue_replo_project_edits
+tools: list_projects, list_sites, create_api_key, publish_site, find_assets, create_site_page, edit_site_page
 ---
 
 # Building Replo Pages
@@ -84,13 +84,16 @@ brief states them.
 
 ## Sourcing page structure
 
-Replo's template library is the cheap path to solid structure, layout rhythm,
-and interaction quality. It is served by the Replo agent rather than as a
-direct tool, so compose from it by prompting a session:
+For connector-based work, use the explicit page operation with siteId and route:
 
-> `edit_replo_project`: "Compose a `<page type>` page for `<brand or vertical>`
-> using the Replo template library — I want the section structure and real
-> source, not a description."
+> `create_site_page`: "Compose a `<page type>` page for `<brand or vertical>`
+> using the Replo template library, with these content, layout, and asset requirements: …"
+
+Use `edit_site_page` for an existing page and the same dedicated tool with its `sessionId` for
+corrections within the same operation. The Replo agent uses its template library,
+normal implementation tools, and applicable verification workflows. Report the
+checks it actually performed and any limitations. Use the local implementation
+instructions below when the user requests local site development.
 
 Then pull the result into your clone and adapt it: preserve the quality-bearing
 contract (responsive intent, accessibility, interaction wiring, aspect-ratio and

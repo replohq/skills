@@ -3,12 +3,12 @@ name: replo-branding
 title: Create a Brand Kit
 summary: Extract a brand from a website or Figma file, then keep it updated.
 description: "Use when creating or updating a Replo brand kit — extracting a brand from a website URL, handling a Figma URL as the brand source, and applying the brand — through Replo’s brand and page tools."
-tools: get_brand_kit, edit_replo_project, continue_replo_project_edits, get_agent_session
+tools: get_brand_kit, create_or_update_brand_kit, apply_brand_kit_to_site, get_agent_session
 ---
 
 # Brand Kits via Replo Sessions
 
-A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Branding**. Use `edit_replo_project` for requested brand changes and `continue_replo_project_edits` for follow-ups in that session. Supply the projectId and only the necessary brand instructions and references. Use `get_brand_kit` for reads. Applying the saved brand to a site is a separate requested change through `edit_replo_project`.
+A Replo project's brand — colors, fonts, logos, imagery, and a business profile — lives in **Branding**. Use `create_or_update_brand_kit` for requested brand changes and the same dedicated tool with its `sessionId` for follow-ups within that operation. Supply the projectId and only the necessary brand instructions and references. Use `get_brand_kit` for reads. Applying the saved brand to a site is a separate requested change through `apply_brand_kit_to_site`, with the siteId from `list_sites`.
 
 ## Create a brand kit from a website URL
 
@@ -22,7 +22,7 @@ Create a brand kit for this project from https://example.com
 
 Notes:
 
-- Pass the selected projectId and the website URL in instructions to `edit_replo_project`.
+- Pass the selected projectId and the website URL in instructions to `create_or_update_brand_kit`.
 - The project's **first** brand becomes the primary brand automatically — no extra step before it can be applied to a site.
 - Extraction takes a minute or two: poll `get_agent_session` while status is `starting`/`running`, and give the user the `dashboardUrl` so they can watch the brand stream into Branding.
 
@@ -42,13 +42,13 @@ Request only the named changes and verify that the result preserves other brand 
 
 ## Figma URL as the brand source
 
-If the user offers a Figma file as the brand source, pass the URL to a session:
+If the user offers a Figma file as the brand source, follow the Figma skill and pass the original URL and requested brand details to `create_or_update_brand_kit`:
 
 ```text
-The brand should come from this Figma file: <figma-url>. Check whether the Figma integration is connected and tell me what you can extract.
+The brand should come from this Figma file: <figma-url>. Check the project’s Figma connection and extract the requested colors, typography, and assets.
 ```
 
-- The session checks the project's Figma integration. **If it is not connected**, the session says so — relay that to the user and have them connect Figma in the Replo dashboard's Integrations app, then continue.
+- The Replo agent uses the project’s Figma integration. If it needs a connection, relay its setup link and continue the same operation after the user connects.
 - Extraction from a website URL is the more complete brand path today. When the user has a live site, offer that first; the Figma file works best as a supplement (specific colors, type styles, or assets the user points at).
 - Do not promise a full automatic Figma → brand-kit extraction; state what the session reports it can do.
 
@@ -56,7 +56,7 @@ The brand should come from this Figma file: <figma-url>. Check whether the Figma
 
 Applying the brand to a site is a design-token change on that site, not a rebuild:
 
-- **Via `edit_replo_project`** (default): `Apply the project's brand to the <site> site.` The agent rewrites the site's design tokens, font, and logo, and runs its own contrast and coverage checks.
+- **Via `apply_brand_kit_to_site`** (default): pass the selected siteId and the requested brand attributes. The agent changes shared styling, fonts, and logo references. Report checks it could not run; do not imply a build or visual pass occurred.
 - **Via local edit**: if you are already working in a clone of the site repo, follow the **apply-branding** skill instead.
 
 ## Reading the brand
