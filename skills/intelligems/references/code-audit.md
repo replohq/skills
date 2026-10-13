@@ -8,12 +8,12 @@ For every applicable item, record **passed**, **failed**, **blocked**, or **not 
 
 Read the [Next.js App Router integration](https://headless.intelligems.io/integration-guides/next.js-or-app-router) and [provider props](https://headless.intelligems.io/reference/providers/provider-props).
 
-- [ ] `@intelligems/headless` >= 1.2.19 is installed in this site. For Replo/Shopify shared-domain journeys, follow the [required package patch](package-patch.md): pin 1.2.19, commit the pnpm patch and registration, verify the bundle hash, and set `cookieDomain` before initialization, or verify a vendor-fixed release. A version minimum alone does not prove the bug is fixed. Verify every import against the installed package.
+- [ ] `@intelligems/headless` **1.2.20 or newer** is installed in this site. Verify the resolved version in the lockfile and every import against the installed package.
 - [ ] One `IntelligemsNextClientsideAppDirectoryProvider` owns the experiment subtree. No standard Intelligems script is also injected through Scripts & Pixels, GTM or page code. Replo hooks are under `ReploProvider`.
 - [ ] `ShopifyIntegrationDetailsLoader`, with `DATA_LOADER_KEYS.SHOPIFY_INTEGRATION_DETAILS`, supplies `storefrontAccessToken` to `storefrontApiToken`. Its render prop also returns `shopifyDomain`; confirm the intended store. Optional `PrefetchedLoaders` uses the same key and `args: {}`. Verify the installed Replo SDK exports both. No manually copied token or Admin/External API credential in page code.
 - [ ] Organization, experience and variation IDs come from the connected account or dashboard, not names or guessed IDs. Record which external configuration remains unverified.
 - [ ] Country and currency come from the site's selected-market cookie resolver and configured market entries, with a valid merchant default. Shopify loader/prefetch country, `ReploProvider` markets, provider `activeCurrencyCode` and tracking props agree. Do not derive market from language or require a product/cart to obtain currency.
-- [ ] If multiple markets are supported, changing the cookie refreshes server props and reconstructs the Intelligems client as needed by the installed version (the 1.2.19 recipe keys the provider by country and currency).
+- [ ] If multiple markets are supported, changing the cookie refreshes server props and reconstructs the Intelligems client as needed by the installed version (key the provider by country and currency).
 
 ## 2. Assignment, tracking and regular cart
 
@@ -114,7 +114,7 @@ The selected product, variant, quantity, plan and existing line properties are s
 ## 5. Redirects, consent and goals
 
 - [ ] Redirect code uses the real configured experience and destination, preserves required query parameters, prevents loops and excludes non-origin routes. Check initial load **and Next.js client navigation**; a persistent provider may need reevaluation/remounting for the new route. Do not assume mounting headless implements redirects automatically.
-- [ ] Shared identity is configured for supported merchant domains; no claim that unrelated domains or `replosites.com` share cookies. Record any pinned cookie-domain patch for live migration tests. No invented `recordExposure` or server assignment API. Any server proposal must defer unknown/browser-only eligibility to the client, not assign control for unknown state.
+- [ ] Shared identity is configured for supported merchant domains; no claim that unrelated domains or `replosites.com` share cookies. No invented `recordExposure` or server assignment API. Any server proposal must defer unknown/browser-only eligibility to the client, not assign control for unknown state.
 - [ ] If the site uses consent, provider, tracker and custom-event handlers obey its CMP before initialization and after revocation. Returning users and hydration are covered; no replay of dropped goals. If policy requires deleting existing attribution, implement that separately from unmounting.
 - [ ] [Custom events](https://headless.intelligems.io/examples/custom-events) map deliberate successful actions to the configured event identifiers, with consistent cohort semantics and duplicate protection. No blanket click tracking, personal quiz answers or duplicated native commerce events. Telemetry checks apply even when the site has no consent UI.
 - [ ] For offers, consult [offer hooks](https://headless.intelligems.io/reference/hooks/offer-hooks); audit tier eligibility, discount stacking and any gift add/remove behavior. Hooks exposing an offer do not implement its cart mutations automatically.

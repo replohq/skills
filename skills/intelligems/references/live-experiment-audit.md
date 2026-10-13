@@ -10,7 +10,7 @@ Mark every applicable item passed, failed, blocked, or not applicable with a rea
 - [ ] On the published build, the integration details loader resolves the intended Shopify store and Intelligems makes a successful Storefront request using its public token. Missing Shopify setup or loader errors show usable default content without mounting Intelligems.
 - [ ] List/get tools return the actual experience, its current status, targeting, distribution and variation IDs. Never guess IDs from labels. Creation tools only create a shell; verify routing/pricing configuration in Intelligems before starting it.
 - [ ] One Intelligems runtime and one tracker per page tree. Check Scripts & Pixels, GTM, snippets and embedded scripts for duplicate standard Intelligems installations on Replo.
-- [ ] If the site uses markets or multiple currencies, change markets without a full reload: cookie, refreshed server props, remounted Intelligems client, displayed price, cart and checkout currency agree. A prop change alone does not reconstruct headless 1.2.19's client.
+- [ ] If the site uses markets or multiple currencies, change markets without a full reload: cookie, refreshed server props, remounted Intelligems client, displayed price, cart and checkout currency agree. A prop change alone does not reconstruct the Intelligems client.
 
 ## Assignment and rendering
 
@@ -25,7 +25,7 @@ Mark every applicable item passed, failed, blocked, or not applicable with a rea
 
 - [ ] Test both origin-to-control and origin-to-Replo-treatment through the actual entry URL, both on direct load and after Next.js Link/router navigation from another page. Test Replo-as-origin separately if required. Confirm one redirect, correct final URL, query preservation, no loop and no redirect on excluded paths.
 - [ ] On sibling domains, inspect the actual cookie Domain/Path/Secure settings and verify identical visitor identity and variation at both ends. Sharing a registered domain makes sharing possible; it does not prove the installed clients use root-domain cookies. Host-only cookies and localStorage do not span siblings.
-- [ ] For shared-domain journeys, verify the [required patch or verified vendor fix](package-patch.md) is present in the published build. Test fresh visitors and existing host-scoped cookies/localStorage for identity continuity; preserve an existing shared identity during migration. Record the exact package/patch version.
+- [ ] For shared-domain journeys, verify headless **1.2.20 or newer** is present in the published build and record its exact version. Confirm the delivered configuration selects the shared registered domain. Test fresh non-Replo-first and Replo-first visits, root/`www`/sibling destinations used by the site, and returning visitors for identity and assignment continuity.
 - [ ] Direct destination visits and a returning visitor re-entering the origin have an explicit, verified behavior. Do not assume arrival at a variation URL assigns its cohort.
 - [ ] Unrelated registered domains are not supported by the standard shared-cookie setup. Do not claim `replosites.com` preserves assignment.
 

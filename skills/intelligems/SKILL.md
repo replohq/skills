@@ -11,7 +11,7 @@ Set up, inspect, or evaluate Intelligems experiments on Replo pages. Analyze exi
 
 Use this guide when a merchant wants a Replo page in an Intelligems test, wants variations on one Replo URL, or asks about an Intelligems experience or its results. For site implementation, read the `building-replo-pages` skill; for local editing and publishing, use the public local-development and publishing skills. Discover the connected Intelligems operations in your available public MCP tools and follow their schemas. If the required operation is unavailable, ask the merchant to provide the experiment IDs or perform that step in Intelligems; do not assume access to internal Replo tools.
 
-To use Intelligems on a Replo site, always install `@intelligems/headless` in that site and configure its provider and tracking hooks. This applies to on-page tests, Replo URLs in Split URL tests, pricing and custom events. For journeys crossing Replo and Shopify hosts on a shared domain, apply the [required 1.2.19 package patch](references/package-patch.md) and set its `cookieDomain` prop, or verify a vendor-fixed release before proceeding.
+To use Intelligems on a Replo site, always install `@intelligems/headless` version **1.2.20 or newer** in that site and configure its provider and tracking hooks. This applies to on-page tests, Replo URLs in Split URL tests, pricing and custom events.
 
 The connected Intelligems External API token gives management and reporting tools. It does **not** install visitor assignment or tracking on a published page. First identify the tested origin, each variation URL or section, the store's domain, and whether attribution must include cart and checkout.
 
@@ -26,7 +26,7 @@ During implementation and before publishing, run the [code audit](references/cod
 
 The Split URL redirect runs after the origin begins loading in the browser, adding a page load for the destination variation. Account for that in performance-sensitive comparisons. The headless SDK does not provide a server-side visitor assignment endpoint or HTTP redirect.
 
-Verify Intelligems' configured cookie domain in the **published CDN configuration**, not just the account settings UI. With headless 1.2.19, a fresh visit to Replo can create a host-scoped `ig-id`; a subsequent Shopify visit can then create a different visitor ID even on sibling domains. A Shopify-first visit with the standard script configured for the registered domain can carry its identity into Replo. Test both directions and direct entry separately. Use the [tested package patch](references/package-patch.md) for this initialization bug; do not replace it with ad-hoc cookie writes or runtime mutations of private SDK internals. Verify continuity in the published setup before claiming it works.
+In Intelligems **Settings → General → Edit domains**, configure the merchant's storefront domain. Subdomains of the same registered domain are covered automatically: `brand.com`, `www.brand.com`, `shop.brand.com` and `lp.brand.com` share `brand.com`. Do not add the Replo subdomain as an additional domain when its parent already covers it; the dashboard rejects overlapping entries.
 
 ## Content variations on one Replo URL
 
@@ -42,6 +42,6 @@ For a Shopify **Buy Now** button, the checkout uses a separate cart, so tracking
 
 For price, shipping or offer tests, content selection alone is insufficient. Configure Intelligems' price/cart hooks and Shopify checkout integration before claiming purchase or revenue results. Verify assignment, page view, cart attributes and a test order before sending live traffic. The [Replo Intelligems guide](https://docs.replo.app/developers/intelligems) contains a component example.
 
-When changing market, remount the Intelligems provider with a key containing the selected country and currency after refreshing the server tree. In headless 1.2.19, the client captures its active currency at construction; updating the prop alone is insufficient. Keep cart, loader and displayed prices aligned with the same market.
+When changing market, remount the Intelligems provider with a key containing the selected country and currency after refreshing the server tree. The client captures its active currency at construction; updating the prop alone is insufficient. Keep cart, loader and displayed prices aligned with the same market.
 
 Use `isReady` for assignment loading and an error boundary with usable default content for thrown SDK errors. Keep the rest of the page usable while the tested section loads. Keep tracking behind assignment readiness and the decision to render the assigned content; never measure a treatment while default fallback content is visible. See the audit for the distinction between unmeasured fallback and an assigned control.
