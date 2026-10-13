@@ -108,11 +108,25 @@ The operations you need, by job:
 - `figma_list_file_components` and `figma_list_file_styles` give the file's
   real component and token names — reuse them instead of inventing structure.
 
-Figma's file-content endpoints are strictly rate-limited, hardest on
-View/Collaborator seats, and a whole-file read on a large document will
-exhaust that budget for little benefit. If a call comes back rate-limited and
-the message says the seat's limit is monthly, do not retry: tell the user
-their Figma seat limits API access and work from what you already fetched.
+Figma's file-content quotas depend on both the file's plan and the connected
+user's seat in that team. Starter limits the file even with a Full/Dev seat;
+`x-figma-rate-limit-type: low` identifies the View/Collab quota and `high` the
+Full/Dev quota. Higher file-content quotas require a paid team owning the file
+and a Full/Dev seat there. File access roles do not identify seats, and a paid
+seat elsewhere does not raise this file's quota. Image fills and metadata have
+different limits, so a plan or seat alone does not establish a monthly block.
+
+**Report an unworkable quota immediately.** When `get_agent_session` reports a
+quota blocker, tell the user before further work; do not resubmit the page task
+or request another agent retry. For direct reads, an explicit valid delay of
+0–60 seconds permits one retry. A longer, missing, or invalid delay, or a second
+429, means stop dependent Figma calls and break any fetch/render loop. Report
+only the known plan and seat, convert the supplied delay to a readable duration,
+and include Figma's upgrade link if present. Explain the paid-team/Full-or-Dev
+requirement only when Starter or a low seat quota is reported; never invent a
+quota size or reset date. Preserve the page and fetched assets. After notifying
+the user, continue only work supported by saved data, and state which comparisons
+or viewports remain unverified rather than claiming fidelity.
 
 The public Figma integration tools expose reads. Replicating a design in Replo
 is a page-edit request handled by `edit_site_page`; posting a comment to the
