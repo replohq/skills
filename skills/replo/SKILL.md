@@ -1,6 +1,6 @@
 ---
 name: replo
-description: "Use for user-requested work in Replo: sites, brand kits, reports, products, orders, files, assets, connected integrations, custom domains, and scheduled tasks. Explains project selection, available tools, asynchronous agent sessions, and the permission requests and questions they raise. Requires a Replo account; do not trigger for unrelated website, analytics, or third-party service requests."
+description: "Use for user-requested work in Replo: sites, brand kits, reports, products, orders, files, assets, connected integrations, custom domains, and inspecting or canceling scheduled tasks. Explains project selection, available tools, asynchronous agent sessions, and the permission requests and questions they raise. Requires a Replo account; do not trigger for unrelated website, analytics, or third-party service requests."
 compatibility: Requires the Replo connector and a Replo account.
 ---
 
@@ -46,7 +46,7 @@ Use only operations present in the tool catalog.
 
 ### Domains and scheduled tasks
 - connect_custom_domain, get_custom_domain_status, and verify_custom_domain manage custom domains; DNS changes at the registrar remain the user's responsibility.
-- create_task and update_task schedule or change recurring agent work; list_tasks and get_task inspect tasks; delete_task cancels a task. Describe the requested work and schedule explicitly.
+- list_tasks and get_task inspect scheduled tasks; delete_task cancels a task. To create or update a scheduled task, use Replo directly rather than an MCP tool.
 
 ### Asynchronous operations
 Poll get_agent_session with the returned sessionId. For corrections, call the same dedicated tool with the returned sessionId and unchanged target. Legacy sessions and operation/target mismatches are rejected. Resolve explicit user answers through resolve_agent_interaction. abort_agent_session interrupts unfinished work without rolling back completed changes.
@@ -80,7 +80,7 @@ Integration tools use names of the form <integration>_<operation> and take replo
 ## Documents, local development, and tasks
 - Use file tools for requested working documents and saved instructions. Saving a document does not install a skill or update agent memory.
 - For explicitly requested local development, list_sites returns clone URLs and create_api_key creates a repository-scoped key. Store its one-time secret in a credential helper or REPLO_API_KEY without repeating or committing it. Request repo.write only for authorized pushes. Pushing is not publication.
-- Use create_task and update_task for requested scheduled work, list_tasks/get_task to inspect tasks, and delete_task to cancel one. Scheduling can execute agent instructions later; confirm the task and schedule with the user.
+- Use list_tasks/get_task to inspect scheduled tasks and delete_task to cancel one. Creating or updating scheduled tasks is not available through this MCP server; direct users to Replo to make those changes.
 
 ## Feedback
 Use report_bug and submit_feature_request only for the user's requested feedback. Include concrete evidence, distinguish observations from unknowns, and omit credentials and unrelated customer data.
