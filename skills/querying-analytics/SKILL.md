@@ -30,7 +30,7 @@ Confirm source field paths, types and units against the schema or representative
 
 ## Revenue, purchases, and conversion metrics
 
-**Required:** Read [references/revenue.md](references/revenue.md) before writing a query with revenue, purchases, conversion rate, AOV or ROAS. It defines the metrics and the shared `session_attribution(since, until)` calculation. Stored `subjectPurchase*` fields and page/conversion rollups are **project-local**, even though queries can read linked projects. Domain filtering purchase rows measures checkout location, not landing-page contribution.
+**Required:** Read [references/revenue.md](references/revenue.md) before writing a query with revenue, purchases, conversion rate, AOV or ROAS. It defines the metrics and the shared `session_attribution(since, until)` calculation. Stored `subjectPurchase*` fields and page/conversion rollups share a session's purchases across linked projects, but they count page views up to 3 hours before each purchase rather than your report window, and older days were computed per project. Domain filtering purchase rows measures checkout location, not landing-page contribution.
 
 ## Project Scoping (Important)
 
@@ -57,7 +57,7 @@ The agent has SELECT access to the following tables and `session_attribution` vi
 
 The three `daily_*_rollups` tables are **`AggregatingMergeTree`** tables refreshed every 5 minutes by background materialized views, with a **3-hour data lag** (the most recent 3 hours of data is not yet in the rollups). They are dramatically faster than `events_computed` for any query that fits their grain (daily, by namespace + optional domain/path/utm_source) and is looking for the data that they roll-up over.
 
-**Prefer rollups for traffic or explicitly project-local metrics. For revenue/conversion analysis spanning linked projects, use `session_attribution` instead.**
+**Prefer rollups for traffic and quick daily trends. For revenue/conversion analysis over a report window, use `session_attribution` instead.**
 
 **Prefer rollups when:**
 
@@ -87,11 +87,11 @@ Aggregate-state columns (must be read with the matching `*Merge` function — se
 | `session_conversions_state`    | `sumMerge`   | Total conversions from sessions that viewed this page (overcounts when summed across pages — measures influence)    |
 | `session_revenue_usd_state`    | `sumMerge`   | Total revenue from sessions that viewed this page in USD (overcounts when summed across pages — measures influence) |
 
-**These rollup revenue/conversion fields are project-local.** They do not join a landing session to a purchase in a sibling namespace. For cross-project reporting use `session_attribution`; see the revenue reference for additive page credit versus overlapping session totals.
+**These rollup revenue/conversion fields come from the stored 3-hour shares.** A session's purchases are shared across linked projects, but older days were computed per project and do not join a landing session to a purchase in a sibling namespace. For report-window reporting use `session_attribution`; see the revenue reference for additive page credit versus overlapping session totals.
 
 ### `daily_namespace_rollups` — Per-day traffic aggregates
 
-`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Traffic and project-local converting sessions (no purchase count/revenue); join with `daily_namespace_purchase_rollups` for purchase metrics.
+`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Traffic and converting sessions from the stored shares (no purchase count/revenue); join with `daily_namespace_purchase_rollups` for purchase metrics.
 
 | Column                      | Combinator   | Meaning                                  |
 | --------------------------- | ------------ | ---------------------------------------- |
@@ -101,7 +101,7 @@ Aggregate-state columns (must be read with the matching `*Merge` function — se
 
 ### `daily_namespace_purchase_rollups` — Per-day purchase aggregates
 
-`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Sourced directly from `replo.purchase` events (separate from `daily_namespace_rollups` because purchase metrics need different attribution logic).
+`AggregatingMergeTree` keyed on `(day, namespace, utm_source)`. Sourced directly from `replo.purchase` events (separate from `daily_namespace_rollups` because purchase metrics need different attribution logic). Each purchase counts once, for the project and UTM source of its session's first `replo.session_start`, which can be a linked project other than the one whose pixel recorded the purchase. Older days counted a purchase only when its session started in the same project.
 
 | Column                             | Combinator   | Meaning                                  |
 | ---------------------------------- | ------------ | ---------------------------------------- |
@@ -244,9 +244,9 @@ FROM (
 | `subjectPurchaseSum`           | Float64 | `computed.subject.purchase.sum`           | Total purchase amount for this **project/session**                   |
 | `subjectPurchaseCount`         | Float64 | `computed.subject.purchase.count`         | Number of purchases in this **project/session**                      |
 | `subjectPurchaseFraction`      | Float64 | `computed.subject.purchase.fraction`      | Fractional attribution weight for this **project/session**           |
-| `subjectPurchaseFractionalSum` | Float64 | `computed.subject.purchase.fractionalSum` | Fractionally attributed purchase amount for this **project/session** |
+| `subjectPurchaseFractionalSum` | Float64 | `computed.subject.purchase.fractionalSum` | Fractionally attributed purchase amount for this **session** |
 
-**The `subject*` columns are legacy project-local aggregates, repeated on event rows.** They group `(namespace, subject)`, not the full authorized cross-project session. Summing repeated totals overcounts, and deduplicating a zero landing-project total cannot recover sibling checkout revenue. For revenue and conversion reporting use `session_attribution` and the recipes in [references/revenue.md](references/revenue.md).
+**The `subject*` columns are stored session aggregates, repeated on event rows.** They share a session's purchases across linked projects with a 3-hour look-back, not your report window, and older rows group `(namespace, subject)` only. Summing repeated totals overcounts, and on older rows deduplicating a zero landing-project total cannot recover sibling checkout revenue. For revenue and conversion reporting use `session_attribution` and the recipes in [references/revenue.md](references/revenue.md).
 
 **`computed` JSON structure:**
 
@@ -483,7 +483,7 @@ ORDER BY day
 ## Important Notes
 
 - **No namespace filter needed.** Queries are automatically scoped to the current project and any workspace siblings that share its Shopify store via ClickHouse row policies on every namespaced table. Adding `WHERE namespace = ...` is unnecessary; to isolate a single storefront, filter by `domain` (rows can span multiple sibling namespaces).
-- **Prefer the `daily_*_rollups` tables** for traffic or explicitly project-local aggregates over the last 7+ days — they're dramatically faster than `events_computed`. Fall back to `events_computed FINAL` for sub-day granularity, the last 3 hours of data (rollups have a 3-hour lag), or dimensions the rollups don't carry.
+- **Prefer the `daily_*_rollups` tables** for traffic and daily aggregates over the last 7+ days — they're dramatically faster than `events_computed`. Fall back to `events_computed FINAL` for sub-day granularity, the last 3 hours of data (rollups have a 3-hour lag), or dimensions the rollups don't carry.
 - **Rollup `*_state` columns must be read with `*Merge`** combinators (`countMerge`, `uniqMerge`, `sumMerge`) and `GROUP BY` your dimensions. Selecting them raw returns binary state blobs.
 - **Rollup revenue is already in USD** (converted via `convert_to_usd` at MV write time). Do not try to convert it again.
 - **For Insights dashboard trends, use the bucket spine required by `insights-dashboard`. For other time-series queries, use `WITH FILL STEP INTERVAL ...`** (daily / hourly / weekly grouping) so days with zero activity still appear as zero-valued rows instead of dropping out of the result. See "Filling gaps in time-series queries" under Common Query Patterns.

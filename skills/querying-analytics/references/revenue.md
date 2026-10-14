@@ -33,7 +33,7 @@ The view returns `namespace, subject, date, id, name, data, domain, path, title`
 
 Currency conversion uses the purchase date's exchange rate, then the latest available rate, then 1:1 when no rate exists (the existing `convert_to_usd` policy). Missing currency/rates are a reporting limitation: inspect unexpected currencies and disclose gaps rather than presenting unverified conversion as exact. Purchases without an eligible pageview have session revenue but no attributed page revenue. Pixel totals need not equal Shopify's ledger (tracking coverage, refunds and order adjustments differ).
 
-**Do not use `subjectPurchase*` or page/conversion rollups for cross-project attribution.** Those stored fields are computed within `(namespace, subject)` and can be zero on the landing project's events when checkout is in a sibling. Taking `max`/`any` of those values after selecting a landing domain does not repair the missing purchase. Rollups remain useful for traffic or explicitly project-local analysis, with their 3-hour lag.
+**Do not use `subjectPurchase*` or page/conversion rollups for report-window attribution.** Those stored fields share a session's purchases across linked projects, but they count page views up to 3 hours before each purchase rather than the report window, and older rows were computed per project, so they can be zero on the landing project's events when checkout is in a sibling. Taking `max`/`any` of those values after selecting a landing domain does not repair a missing purchase. Rollups remain useful for traffic and quick daily trends, with their 3-hour lag.
 
 ## Canonical queries
 
