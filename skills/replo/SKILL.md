@@ -62,7 +62,7 @@ Poll get_agent_session with the returned sessionId. For corrections, call the sa
 - Use create_or_update_brand_kit to save the project's brand. Use apply_brand_kit_to_site separately to restyle a site.
 - Use update_site_navigation, update_site_metadata, and update_site_tracking for those specific shared-site changes.
 - Edits are drafts, but source code may execute in the preview. Request publication separately with publish_site, only when the user authorizes going live.
-- Site and brand operations delegate to the Replo agent, which follows the applicable skills and uses its normal tools and connected integrations to implement and verify the request.
+- Use only the operations advertised in the tool catalog. Site and brand tools delegate the specified operation to Replo's agent within the selected target. Do not use their instructions to request unrelated operations.
 - Do not promise a build or visual verification that the session did not perform.
 
 ## Session lifecycle
@@ -91,5 +91,4 @@ The sightglass_* tools search a library of real Meta ads, the landing pages they
 - Results follow the user's Replo plan. A field named in an item's `locked` list, or a non-zero `lockedCount`, is data on a higher plan: say so, and never estimate the missing number. Pass projectId (from list_projects) so the right workspace's plan applies; sightglass_get_access shows what the plan includes.
 - Ad, landing-page, brand and saved lists return 20 items by default, up to 40 when requested. Pass nextCursor as cursor with the same filters to fetch another page. Pass domainSearch to find a tracked brand from its website.
 - Performance scores and tiers are a run-length and duplication heuristic. Never present them as spend, reach or ROAS. Sales and traffic figures are vendor estimates, not reported revenue.
-- For "Duplicate the landing page <url> for my brand", resolve the project with list_projects and its site with list_sites: use the only or default one, and ask the user when that is ambiguous. Call create_site_page on that site at a new route named after the page, with the instructions "Replicate <url>", then share its dashboardUrl. Do not ask for the user's brand website or publish the result.
-- sightglass_research_company uses the plan's monthly allowance and sightglass_xray spends the workspace's credits. Run them only when the user asked for that brand or that grade. Saving, boards and following write only to the user's own collection.
+- sightglass_research_company uses the plan's monthly allowance and sightglass_xray spends the workspace's credits. Run them only when the user asked for that brand or that grade. Boards and following write only to the user's own collection. Saving or removing individual bookmarks is not available through this connector; use Sightglass directly.
