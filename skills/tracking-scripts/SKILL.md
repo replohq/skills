@@ -2,7 +2,7 @@
 name: tracking-scripts
 title: Tracking Scripts & Consent
 summary: Add analytics and marketing pixels so they respect cookie consent.
-description: Use when the user asks to add, install, remove, or change an analytics or marketing tracking script, pixel, or tag — GA4 / Google Analytics, Google Tag Manager (GTM), Meta / Facebook pixel, TikTok, Pinterest, Reddit, Snapchat, X / Twitter, Hotjar, Microsoft Clarity, Contentsquare, Triple Whale, Elevar, Segment, Northbeam, Converge, Cookiebot — or pastes a raw `<script>` tag and says "put this on my page", or mentions cookie consent, Cookiebot, a consent management platform (CMP), GDPR/CCPA compliance, customizing/restyling/replacing the cookie consent banner, or making a script respect consent at runtime (window.Replo.customerPrivacy / visitorConsentCollected).
+description: Use when the user asks to add, install, remove, or change an analytics or marketing tracking script, pixel, or tag — GA4 / Google Analytics, Google Tag Manager (GTM), Meta / Facebook pixel, TikTok, Pinterest, Reddit, Snapchat, X / Twitter, Hotjar, Microsoft Clarity, Contentsquare, Triple Whale, Elevar, Segment, Northbeam, Converge, HubSpot, Cookiebot — or pastes a raw `<script>` tag and says "put this on my page", or mentions cookie consent, Cookiebot, a consent management platform (CMP), GDPR/CCPA compliance, customizing/restyling/replacing the cookie consent banner, or making a script respect consent at runtime (window.Replo.customerPrivacy / visitorConsentCollected).
 ---
 
 # Tracking Scripts & Cookie Consent
@@ -54,8 +54,8 @@ Add one entry with the provider's PascalCase `type` and its ID/key as
 
 `GA4`, `GoogleTagManager`, `Meta`, `TikTok`, `Pinterest`, `Reddit`, `Snapchat`,
 `X`, `Hotjar`, `MicrosoftClarity`, `Contentsquare`, `Segment`, `Northbeam`,
-`Converge`, `Cookiebot` (a consent platform, not a tracker — see "Cookiebot"
-below).
+`Converge`, `HubSpot`, `Cookiebot` (a consent platform, not a tracker — see
+"Cookiebot" below).
 
 For Converge the `identifier` is the public token from the merchant's Client
 Source (Converge → Data management → Event sources), which loads
@@ -370,6 +370,7 @@ already gates them at injection. Full surface is documented in
 | --- | --- |
 | Add GA4 / Meta / TikTok / etc. | Check for a `GoogleTagManager`, `Segment`, or Elevar entry first and warn about double-firing; then add `{ type, identifier }` to the `scripts` array |
 | Add Converge | Add `{ type: "Converge", identifier: "<public token>" }` (see "Adding a known provider") |
+| Add HubSpot tracking code | Add `{ type: "HubSpot", identifier: "<Hub ID>" }` (see "Adding a known provider") |
 | Add an arbitrary tracking script | Add `{ type: "custom", id, src \| body, requiredConsent }` |
 | Add Triple Whale | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Triplewhale", body, requiredConsent }`; tell the user to register the site's domains as headless domains in Triple Whale (see "Snippet providers") |
 | Add Elevar | Ask for the dashboard headless snippet; add `{ type: "snippet", id: "Elevar", body, module: true, requiredConsent }`; the runtime pushes the `dl_*` data layer events itself (see "Snippet providers") |
