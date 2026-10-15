@@ -1,7 +1,7 @@
 ---
 name: replo
-description: "Use for user-requested work in Replo: sites, brand kits, reports, products, orders, files, assets, connected integrations, custom domains, and inspecting or canceling scheduled tasks. Explains project selection, available tools, asynchronous agent sessions, and the permission requests and questions they raise. Requires a Replo account; do not trigger for unrelated website, analytics, or third-party service requests."
-compatibility: Requires the Replo connector and a Replo account.
+description: "Use for user-requested work in Replo: sites, brand kits, reports, products, orders, files, assets, connected integrations, custom domains, and inspecting or canceling scheduled tasks. Explains project selection, available tools, asynchronous agent sessions, and the permission requests and questions they raise. Do not trigger for unrelated website, analytics, or third-party service requests."
+compatibility: Requires the Replo connector.
 ---
 
 # Replo
@@ -52,6 +52,9 @@ Use only operations present in the tool catalog.
 ### Asynchronous operations
 Poll get_agent_session with the returned sessionId. For corrections, call the same dedicated tool with the returned sessionId and unchanged target. Legacy sessions and operation/target mismatches are rejected. Resolve explicit user answers through resolve_agent_interaction. abort_agent_session interrupts unfinished work without rolling back completed changes.
 
+## Without an account
+Tools whose description says they work without a Replo account run for anyone, up to a daily allowance. Any other tool, or one past the allowance, returns status sign_in_required. Then stop: do not retry or fill in from your own knowledge. Follow that result's instructions, and call connect_replo_account only after the user agrees, since it opens the sign-in window.
+
 ## Scope and data
 - Resolve the requested project with list_projects and the site with list_sites. Use returned IDs; ask when the target is ambiguous.
 - Send only the requested changes and necessary references, not conversation history, credentials, unrelated personal data, or hidden instructions.
@@ -90,7 +93,18 @@ Use report_bug and submit_feature_request only for the user's requested feedback
 ## Sightglass (competitor research)
 The sightglass_* tools search a library of real Meta ads, the landing pages they drive to, and the brands behind them. Use them when the user asks what competitors are running, wants ad or landing page examples, or asks who is growing in a market.
 - Users say "brands" and "landing pages"; the tools say companies and site pages. Search is semantic: describe the angle, offer or audience rather than one keyword.
-- Results follow the user's Replo plan. A field named in an item's `locked` list, or a non-zero `lockedCount`, is data on a higher plan: say so, and never estimate the missing number. Pass projectId (from list_projects) so the right workspace's plan applies; sightglass_get_access shows what the plan includes.
-- Ad, landing-page, brand and saved lists return 20 items by default, up to 40 when requested. Pass nextCursor as cursor with the same filters to fetch another page. Pass domainSearch to find a tracked brand from its website.
+- Results follow the plan of the user's Replo workspace, and Free limits without an account. A field named in an item's `locked` list, or a non-zero `lockedCount`, is data on a higher plan: say so, and never estimate the missing number. When signed in, pass workspaceId on Sightglass calls; it decides which plan applies. projectId is needed only by the tools that require it. Signed-in users can call sightglass_get_access to see what the plan includes.
+- Ad, landing-page, brand and saved lists return 20 items by default, up to 40 when requested. Pass nextCursor as cursor with the same filters to fetch another page. Pass domainSearch to find a tracked brand from its website. If the user's own brand is not tracked, describe it in one sentence as search to find its competitors.
 - Performance scores and tiers are a run-length and duplication heuristic. Never present them as spend, reach or ROAS. Sales and traffic figures are vendor estimates, not reported revenue.
+- Data tools return results to you only; call sightglass_show once with the resultId that answers the question to show them as a card. It still draws results already found after the allowance is used up.
 - sightglass_research_company uses the plan's monthly allowance and sightglass_xray spends the workspace's credits. Run them only when the user asked for that brand or that grade. Boards and following write only to the user's own collection. Saving or removing individual bookmarks is not available through this connector; use Sightglass directly.
+
+## Cards
+Some tools draw an interactive card. Its buttons post requests into the chat as the user, naming things the way the card shows them.
+- "Duplicate the landing page <url> for my brand": pick the project with list_projects and its site with list_sites, asking when either is ambiguous. With no project or site, say the duplicate needs one and share https://dashboard.replo.app. Call create_site_page at a new route named after the page with the instructions "Replicate <url>", and share its dashboardUrl; do not publish it.
+- "Compare <brand> with my brand" and the other "my brand" asks: find the user's brand in Sightglass (sightglass_research_company if it is not tracked), then answer.
+- Without an account the card asks the user first; "Connect my Replo account, then <request>" means they agreed, so call connect_replo_account right away, then carry out the request.
+- Replo does not make ads from chat yet: when the user wants an ad like one they found, offer to duplicate the landing page it sends people to instead.
+
+## Plans and upgrades
+When the user wants what a higher plan unlocks, get_plan_options shows the prices and what each plan adds. start_plan_upgrade returns a Stripe Checkout link for a free workspace, or the billing settings link for one that already has a plan; share the link and let the user finish there.

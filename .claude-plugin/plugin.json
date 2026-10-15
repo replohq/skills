@@ -1,6 +1,6 @@
 {
   "name": "replo",
-  "description": "Connect your agent to your Replo workspace and run ecommerce work from one conversation. Find projects, sites, products, assets, orders, and performance data. Build or update storefront experiences with Replo Agent, publish when you’re ready, manage products and assets, connect custom domains, and schedule recurring work. Use it to launch a product page from catalog data, find the right campaign assets, inspect orders, diagnose an underperforming page, or turn analytics into an A/B test.",
+  "description": "Research ecommerce competitors in one conversation, no account needed: find the brands in a market, the Meta ads they run, and the landing pages those ads drive to. Connect your Replo workspace to run ecommerce work too. Find projects, sites, products, assets, orders, and performance data. Build or update storefront experiences with Replo Agent, publish when you’re ready, manage products and assets, connect custom domains, and schedule recurring work. Use it to launch a product page from catalog data, find the right campaign assets, inspect orders, diagnose an underperforming page, or turn analytics into an A/B test.",
   "version": "1.0.0",
   "author": { "name": "Replo", "url": "https://replo.app" },
   "homepage": "https://replo.app",
