@@ -24,6 +24,7 @@ Use only operations present in the tool catalog.
 - apply_brand_kit_to_site changes shared brand styling. update_site_navigation changes shared navigation components. update_site_metadata changes site-wide SEO metadata. update_site_tracking changes tracking in the root layout.
 - These operations require a provisioned site. The Replo agent follows the applicable skills and uses its normal tools, including source editing, shell commands, templates, verification, and connected integrations, to complete the requested operation. Shared layout and component edits affect that site's other pages.
 - Source changes can execute in the site's preview. They are not a code sandbox or a guarantee against all transitive effects. Publication is separate: call publish_site only when requested.
+- create_shared_preview creates or recovers a public draft preview link from an existing preview workspace; it does not publish. Anyone with the URL can view the page if it is available when opened. revoke_shared_preview disables that link without removing page content.
 - For user-requested local development, use the local-development skill and repository-scoped create_api_key.
 
 ### Brand kits
@@ -62,6 +63,7 @@ Poll get_agent_session with the returned sessionId. For corrections, call the sa
 - Use create_or_update_brand_kit to save the project's brand. Use apply_brand_kit_to_site separately to restyle a site.
 - Use update_site_navigation, update_site_metadata, and update_site_tracking for those specific shared-site changes.
 - Edits are drafts, but source code may execute in the preview. Request publication separately with publish_site, only when the user authorizes going live.
+- Use create_shared_preview only when asked to share an unpublished page. Anyone with the returned URL can view it. Revoke only the requested link with revoke_shared_preview. A missing preview workspace is not permission to edit or publish the site.
 - Use only the operations advertised in the tool catalog. Site and brand tools delegate the specified operation to Replo's agent within the selected target. Do not use their instructions to request unrelated operations.
 - Do not promise a build or visual verification that the session did not perform.
 
