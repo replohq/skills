@@ -1,0 +1,24 @@
+{
+  "name": "@replohq/replo",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/replohq/skills.git"
+  },
+  "homepage": "https://replo.app",
+  "files": [
+    ".claude-plugin/",
+    ".cursor-plugin/",
+    ".mcp.json",
+    "openclaw.plugin.json",
+    "skills/",
+    "assets/",
+    "logo.svg",
+    "server.json",
+    "README.md",
+    "LICENSE"
+  ]
+}

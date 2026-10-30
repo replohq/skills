@@ -1,0 +1,21 @@
+{
+  "id": "replo",
+  "name": "Replo",
+  "version": "2.0.0",
+  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
+  "skills": [
+    "./skills"
+  ],
+  "mcpServers": {
+    "replo": {
+      "type": "http",
+      "url": "https://api.replo.app/v1/mcp",
+      "transport": "streamable-http"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+}

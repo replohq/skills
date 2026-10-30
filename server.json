@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.replohq/replo",
+  "title": "Replo",
+  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
+  "version": "1.0.0",
+  "websiteUrl": "https://replo.app",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.replo.app/v1/mcp"
+    }
+  ],
+  "icons": [
+    {
+      "src": "https://assets.replocdn.com/brand/logos/square-app-icon-cream-on-black.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "1200x1200"
+      ]
+    }
+  ]
+}

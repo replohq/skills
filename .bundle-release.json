@@ -1,0 +1,20 @@
+{
+  "hash": "47201914a3af2bd5c7375611e002f7e3944aa809fa00fe5975cf06da050c8218",
+  "version": "2.0.0",
+  "files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".clawhubignore",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "LICENSE.skills",
+    "README.md",
+    "assets/icon.png",
+    "logo.svg",
+    "openclaw.plugin.json",
+    "package.json",
+    "server.json",
+    "skills/replo/SKILL.md"
+  ]
+}

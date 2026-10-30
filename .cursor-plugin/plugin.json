@@ -1,0 +1,28 @@
+{
+  "name": "replo",
+  "displayName": "Replo",
+  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Replo",
+    "email": "support@replo.app"
+  },
+  "homepage": "https://replo.app",
+  "repository": "https://github.com/replohq/skills",
+  "license": "SEE LICENSE IN LICENSE",
+  "logo": "logo.svg",
+  "keywords": [
+    "replo",
+    "ecommerce",
+    "competitor-research",
+    "meta-ads",
+    "ad-library",
+    "storefront",
+    "landing-pages",
+    "ab-testing",
+    "analytics",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

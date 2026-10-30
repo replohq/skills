@@ -1,0 +1,11 @@
+{
+  "name": "replo",
+  "owner": {
+    "name": "Replo",
+    "email": "support@replo.app"
+  },
+  "metadata": {
+    "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant."
+  },
+  "plugins": [{ "name": "replo", "source": "./" }]
+}
