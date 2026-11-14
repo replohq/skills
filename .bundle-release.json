@@ -1,6 +1,6 @@
 {
-  "hash": "47201914a3af2bd5c7375611e002f7e3944aa809fa00fe5975cf06da050c8218",
-  "version": "2.0.0",
+  "hash": "cf4d15f9c7f12bcd28a4b5f6e9284d97fedbff86c1950b8acda07f67c354be6a",
+  "version": "2.0.1",
   "files": [
     ".claude-plugin/marketplace.json",
     ".claude-plugin/plugin.json",

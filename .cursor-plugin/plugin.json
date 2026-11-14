@@ -1,8 +1,8 @@
 {
   "name": "replo",
   "displayName": "Replo",
-  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
-  "version": "2.0.0",
+  "description": "Launch and grow any business online: research competitors, then build and manage sites with AI.",
+  "version": "2.0.1",
   "author": {
     "name": "Replo",
     "email": "support@replo.app"
@@ -13,11 +13,11 @@
   "logo": "logo.svg",
   "keywords": [
     "replo",
-    "ecommerce",
+    "small-business",
     "competitor-research",
     "meta-ads",
     "ad-library",
-    "storefront",
+    "website-builder",
     "landing-pages",
     "ab-testing",
     "analytics",

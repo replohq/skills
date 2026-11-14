@@ -5,7 +5,7 @@
     "email": "support@replo.app"
   },
   "metadata": {
-    "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant."
+    "description": "Launch and grow any business online: research competitors, then build and manage sites with AI."
   },
   "plugins": [{ "name": "replo", "source": "./" }]
 }

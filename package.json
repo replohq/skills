@@ -1,8 +1,8 @@
 {
   "name": "@replohq/replo",
   "private": true,
-  "version": "2.0.0",
-  "description": "Research competitors and build, edit, and manage ecommerce sites from your AI assistant.",
+  "version": "2.0.1",
+  "description": "Launch and grow any business online: research competitors, then build and manage sites with AI.",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
