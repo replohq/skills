@@ -1,7 +1,7 @@
 {
   "id": "replo",
   "name": "Replo",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Launch and grow any business online: research competitors, then build and manage sites with AI.",
   "skills": [
     "./skills"
