@@ -1,6 +1,6 @@
 ---
 name: replo
-description: "Use for user-requested work in Replo through the Replo connector: sites and pages, brands, products, orders, files, assets, analytics, integrations, custom domains, automations (scheduled tasks), and competitor ad research. Before starting, call the connector's skills tool to see the available skills, then read the ones you need. Do not trigger for unrelated website, analytics, or third-party service requests."
+description: "Use when the user wants to start or run a business online through the Replo connector: build and publish a website or page with Site Builder, then sell products, take orders, read analytics, connect a domain or research competitors' ads. Before starting, call the connector's skills tool to see the available skills, then read the ones you need. Do not trigger for unrelated website, analytics, or third-party service requests."
 compatibility: Requires the Replo connector.
 ---
 
