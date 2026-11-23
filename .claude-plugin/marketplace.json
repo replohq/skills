@@ -5,7 +5,7 @@
     "email": "support@replo.app"
   },
   "metadata": {
-    "description": "Start a business online with AI: Site Builder designs, builds and publishes your website."
+    "description": "Start and run a business online: build your site, sell products and manage your ads."
   },
   "plugins": [{ "name": "replo", "source": "./" }]
 }

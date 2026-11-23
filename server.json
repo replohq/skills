@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.replohq/replo",
   "title": "Replo",
-  "description": "Start a business online with AI: Site Builder designs, builds and publishes your website.",
+  "description": "Start and run a business online: build your site, sell products and manage your ads.",
   "version": "1.0.0",
   "websiteUrl": "https://replo.app",
   "remotes": [
