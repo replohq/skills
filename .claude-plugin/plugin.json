@@ -1,13 +1,14 @@
 {
   "name": "replo",
   "description": "Start and run a business online: build your site, sell products and manage your ads.",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "author": {
     "name": "Replo",
     "email": "support@replo.app",
     "url": "https://replo.app"
   },
   "homepage": "https://replo.app",
+  "icon": "./assets/icon.png",
   "privacyPolicyUrl": "https://replo.app/privacy",
   "repository": "https://github.com/replohq/skills",
   "license": "SEE LICENSE IN LICENSE"
